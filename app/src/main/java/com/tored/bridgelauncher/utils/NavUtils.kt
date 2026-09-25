@@ -88,6 +88,21 @@ fun Context.launchApp(packageName: String)
 }
 
 
+private val openableUrlSchemes = listOf("http", "https", "tel", "mailto", "sms", "smsto", "geo")
+
+/** Open a URL in the app that handles it (browser, dialer, mail...) */
+fun Context.openUrl(url: String)
+{
+    val uri = Uri.parse(url)
+    val scheme = uri.scheme?.lowercase()
+
+    if (scheme !in openableUrlSchemes)
+        throw Exception("URL scheme must be one of ${openableUrlSchemes.joinToString { q(it) }} (got ${q(scheme)}).")
+
+    startActivity(Intent(Intent.ACTION_VIEW, uri))
+}
+
+
 // SYSTEM
 
 /** Open Android settings */

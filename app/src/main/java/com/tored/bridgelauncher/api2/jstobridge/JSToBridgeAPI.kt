@@ -26,6 +26,7 @@ import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
 import com.tored.bridgelauncher.api2.server.getBridgeApiEndpointURL
 import com.tored.bridgelauncher.api2.shared.BridgeButtonVisibilityStringOptions
 import com.tored.bridgelauncher.api2.shared.BridgeThemeStringOptions
+import com.tored.bridgelauncher.api2.shared.DefaultAppRoleStringOptions
 import com.tored.bridgelauncher.api2.shared.OverscrollEffectsStringOptions
 import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
@@ -46,6 +47,7 @@ import com.tored.bridgelauncher.utils.getIsSystemInNightMode
 import com.tored.bridgelauncher.utils.launchApp
 import com.tored.bridgelauncher.utils.messageOrDefault
 import com.tored.bridgelauncher.utils.openAppInfo
+import com.tored.bridgelauncher.utils.openUrl
 import com.tored.bridgelauncher.utils.q
 import com.tored.bridgelauncher.utils.requestAppUninstall
 import com.tored.bridgelauncher.utils.showErrorToast
@@ -159,6 +161,42 @@ class JSToBridgeAPI(
     fun requestLaunchApp(packageName: String, showToastIfFailed: Boolean = true): Boolean
     {
         return tryRunInHomescreenContext(showToastIfFailed) { launchApp(packageName) }
+    }
+
+    /** @return package name of the user's default app for [role], or null if there is none (Android would show a chooser). */
+    @JavascriptInterface
+    fun getDefaultAppPackageName(role: String): String?
+    {
+        val intent = try
+        {
+            DefaultAppRoleStringOptions.fromStringOrThrow(role).createIntent()
+        }
+        catch (ex: Exception)
+        {
+            _lastException = ex
+            throw ex
+        }
+
+        val activityInfo = _pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo
+            ?: return null
+
+        // when there is no default, the system chooser (ResolverActivity in the "android" package) is resolved
+        return if (activityInfo.packageName == "android" || activityInfo.name.endsWith("ResolverActivity"))
+            null
+        else
+            activityInfo.packageName
+    }
+
+    // endregion
+
+
+    // region urls
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenUrl(url: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) { openUrl(url) }
     }
 
     // endregion
