@@ -16,6 +16,7 @@ import com.tored.bridgelauncher.BridgeLauncherApplication
 import com.tored.bridgelauncher.api2.bridgetojs.BridgeToJSAPI
 import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
+import com.tored.bridgelauncher.api2.webview.BridgeFileChooser
 import com.tored.bridgelauncher.api2.webview.BridgeWebChromeClient
 import com.tored.bridgelauncher.api2.webview.BridgeWebViewClient
 import com.tored.bridgelauncher.services.BridgeServices
@@ -121,9 +122,11 @@ class HomeScreen2VM(
         )
     }
 
+    private val _chromeClient = BridgeWebChromeClient(_consoleMessages)
+
     val webViewDeps = BridgeWebViewDeps(
         webViewClient = BridgeWebViewClient(_bridgeServer),
-        chromeClient = BridgeWebChromeClient(_consoleMessages),
+        chromeClient = _chromeClient,
         onCreated = {
             onBridgeWebViewCreated(it, _jsToBridgeInterface)
             webView = it
@@ -138,9 +141,10 @@ class HomeScreen2VM(
         drawOverscrollEffects = _drawWebViewOverscrollEffects
     )
 
-    fun afterCreate(context: Context)
+    fun afterCreate(context: Context, fileChooser: BridgeFileChooser)
     {
         _jsToBridgeInterface.homeScreenContext = context
+        _chromeClient.fileChooser = fileChooser
     }
 
     fun beforePause()
@@ -167,6 +171,7 @@ class HomeScreen2VM(
     fun beforeDestroy()
     {
         _jsToBridgeInterface.homeScreenContext = null
+        _chromeClient.fileChooser = null
     }
 
     val observerCallbacks = HomeScreenObserverCallbacks(
