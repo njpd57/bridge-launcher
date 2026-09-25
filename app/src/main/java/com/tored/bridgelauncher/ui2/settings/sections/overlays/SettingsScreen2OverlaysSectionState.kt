@@ -6,4 +6,5 @@ data class SettingsScreen2OverlaysSectionState(
     val statusBarAppearance: SystemBarAppearanceOptions,
     val navigationBarAppearance: SystemBarAppearanceOptions,
     val drawWebViewOverscrollEffects: Boolean,
+    val lockHomeScreenToPortrait: Boolean,
 )

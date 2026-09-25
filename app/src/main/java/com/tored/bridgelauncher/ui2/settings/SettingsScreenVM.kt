@@ -88,6 +88,7 @@ class SettingsScreenVM(
     private val _statusBarAppearance by useBridgeSettingState(_app, BridgeSettings.statusBarAppearance)
     private val _navigationBarAppearance by useBridgeSettingState(_app, BridgeSettings.navigationBarAppearance)
     private val _drawWebViewOverscrollEffects by useBridgeSettingState(_app, BridgeSettings.drawWebViewOverscrollEffects)
+    private val _lockHomeScreenToPortrait by useBridgeSettingState(_app, BridgeSettings.lockHomeScreenToPortrait)
     private val _showBridgeButton by useBridgeSettingState(_app, BridgeSettings.showBridgeButton)
     private val _showLaunchAppsWhenBridgeButtonCollapsed by useBridgeSettingState(_app, BridgeSettings.showLaunchAppsWhenBridgeButtonCollapsed)
 
@@ -148,6 +149,7 @@ class SettingsScreenVM(
             statusBarAppearance = _statusBarAppearance,
             navigationBarAppearance = _navigationBarAppearance,
             drawWebViewOverscrollEffects = _drawWebViewOverscrollEffects,
+            lockHomeScreenToPortrait = _lockHomeScreenToPortrait,
         )
     }
 
@@ -163,6 +165,10 @@ class SettingsScreenVM(
         changeDrawWebViewOverscrollEffects = {
             Log.d(TAG, "changeDrawWebViewOverscrollEffects called: $it")
             updateSettings { setBridgeSetting(BridgeSettings.drawWebViewOverscrollEffects, it) }
+        },
+        changeLockHomeScreenToPortrait = {
+            Log.d(TAG, "changeLockHomeScreenToPortrait called: $it")
+            updateSettings { setBridgeSetting(BridgeSettings.lockHomeScreenToPortrait, it) }
         },
     )
 

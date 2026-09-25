@@ -16,12 +16,14 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.settings.BridgeThemeChang
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.DrawSystemWallpaperBehindWebViewChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.NavigationBarAppearanceChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.OverscrollEffectsChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.settings.ScreenOrientationChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.StatusBarAppearanceChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.systemuimode.SystemNightModeChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.windowinsets.WindowInsetsChangedEvent
 import com.tored.bridgelauncher.api2.shared.BridgeButtonVisibilityStringOptions
 import com.tored.bridgelauncher.api2.shared.BridgeThemeStringOptions
 import com.tored.bridgelauncher.api2.shared.OverscrollEffectsStringOptions
+import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.services.apps.InstalledAppListChangeEvent
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
@@ -104,6 +106,7 @@ class BridgeToJSAPI(
             onCollectSetting(showBridgeButton) { BridgeButtonVisibilityChangedEvent(BridgeButtonVisibilityStringOptions.fromShowBridgeButton(it)) }
             onCollectSetting(drawSystemWallpaperBehindWebView) { DrawSystemWallpaperBehindWebViewChangedEvent(it) }
             onCollectSetting(drawWebViewOverscrollEffects) { OverscrollEffectsChangedEvent(OverscrollEffectsStringOptions.fromDrawWebViewOverscrollEffects(it)) }
+            onCollectSetting(lockHomeScreenToPortrait) { ScreenOrientationChangedEvent(ScreenOrientationStringOptions.fromLockHomeScreenToPortrait(it)) }
             onCollectSetting(theme) { BridgeThemeChangedEvent(BridgeThemeStringOptions.fromBridgeTheme(it)) }
             onCollectSetting(statusBarAppearance) { StatusBarAppearanceChangedEvent(SystemBarAppearanceStringOptions.fromSystemBarAppearance(it)) }
             onCollectSetting(navigationBarAppearance) { NavigationBarAppearanceChangedEvent(SystemBarAppearanceStringOptions.fromSystemBarAppearance(it)) }

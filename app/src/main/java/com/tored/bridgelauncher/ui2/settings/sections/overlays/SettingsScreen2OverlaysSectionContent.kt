@@ -40,6 +40,12 @@ fun SettingsScreen2OverlaysSectionContent(
             isChecked = state.drawWebViewOverscrollEffects,
             onCheckedChange = { actions.changeDrawWebViewOverscrollEffects(it) }
         )
+
+        CheckboxField(
+            label = BridgeSettings.lockHomeScreenToPortrait.displayName,
+            isChecked = state.lockHomeScreenToPortrait,
+            onCheckedChange = { actions.changeLockHomeScreenToPortrait(it) }
+        )
     }
 }
 
@@ -51,6 +57,7 @@ fun SettingsScreen2OverlaysSectionContentPreview(
     statusBarAppearance: SystemBarAppearanceOptions = SystemBarAppearanceOptions.Hide,
     navigationBarAppearance: SystemBarAppearanceOptions = SystemBarAppearanceOptions.Hide,
     drawWebViewOverscrollEffects: Boolean = false,
+    lockHomeScreenToPortrait: Boolean = false,
 )
 {
     PreviewWithSurfaceAndPadding {
@@ -58,7 +65,8 @@ fun SettingsScreen2OverlaysSectionContentPreview(
             state = SettingsScreen2OverlaysSectionState(
                 statusBarAppearance = statusBarAppearance,
                 navigationBarAppearance = navigationBarAppearance,
-                drawWebViewOverscrollEffects = drawWebViewOverscrollEffects
+                drawWebViewOverscrollEffects = drawWebViewOverscrollEffects,
+                lockHomeScreenToPortrait = lockHomeScreenToPortrait,
             ),
             actions = SettingsScreen2OverlaysSectionActions.empty()
         )

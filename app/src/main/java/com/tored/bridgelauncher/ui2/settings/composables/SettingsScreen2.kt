@@ -273,6 +273,7 @@ fun SettingsScreen2Preview01()
                 statusBarAppearance = SystemBarAppearanceOptions.Hide,
                 navigationBarAppearance = SystemBarAppearanceOptions.LightIcons,
                 drawWebViewOverscrollEffects = true,
+                lockHomeScreenToPortrait = false,
             ),
             overlaysSectionActions = SettingsScreen2OverlaysSectionActions.empty(),
 

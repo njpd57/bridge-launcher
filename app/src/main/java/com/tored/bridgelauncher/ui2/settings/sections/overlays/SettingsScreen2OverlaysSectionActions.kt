@@ -6,10 +6,11 @@ data class SettingsScreen2OverlaysSectionActions(
     val changeStatusBarAppearance: (newValue: SystemBarAppearanceOptions) -> Unit,
     val changeNavigationBarAppearance: (newValue: SystemBarAppearanceOptions) -> Unit,
     val changeDrawWebViewOverscrollEffects: (newValue: Boolean) -> Unit,
+    val changeLockHomeScreenToPortrait: (newValue: Boolean) -> Unit,
 )
 {
     companion object
     {
-        fun empty() = SettingsScreen2OverlaysSectionActions({}, {}, {})
+        fun empty() = SettingsScreen2OverlaysSectionActions({}, {}, {}, {})
     }
 }

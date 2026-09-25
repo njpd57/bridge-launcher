@@ -27,6 +27,7 @@ import com.tored.bridgelauncher.api2.server.getBridgeApiEndpointURL
 import com.tored.bridgelauncher.api2.shared.BridgeButtonVisibilityStringOptions
 import com.tored.bridgelauncher.api2.shared.BridgeThemeStringOptions
 import com.tored.bridgelauncher.api2.shared.OverscrollEffectsStringOptions
+import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemNightModeStringOptions
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
@@ -90,6 +91,7 @@ class JSToBridgeAPI(
     private val _showBridgeButton = s(BridgeSettings.showBridgeButton)
     private val _drawSystemWallpaperBehindWebView = s(BridgeSettings.drawSystemWallpaperBehindWebView)
     private val _drawWebViewOverscrollEffects = s(BridgeSettings.drawWebViewOverscrollEffects)
+    private val _lockHomeScreenToPortrait = s(BridgeSettings.lockHomeScreenToPortrait)
 
     private var _lastException: Exception? = null
         set(value)
@@ -355,6 +357,30 @@ class JSToBridgeAPI(
     // endregion
 
 
+    // region screen orientation
+
+    @JavascriptInterface
+    fun getScreenOrientation(): String
+    {
+        return ScreenOrientationStringOptions.fromLockHomeScreenToPortrait(_lockHomeScreenToPortrait.value).rawValue
+    }
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetScreenOrientation(orientation: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryEditPrefs(showToastIfFailed)
+        {
+            it.setBridgeSetting(
+                BridgeSettings.lockHomeScreenToPortrait,
+                ScreenOrientationStringOptions.lockHomeScreenToPortraitOrThrow(orientation),
+            )
+        }
+    }
+
+    // endregion
+
+
     // region system night mode
 
     @JavascriptInterface
@@ -375,6 +401,10 @@ class JSToBridgeAPI(
         return ActivityCompat.checkSelfPermission(_app, "android.permission.MODIFY_DAY_NIGHT_MODE") == PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(_app, Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
     }
+
+    // alias matching the name declared in Bridge.d.ts and the canRequestSystemNightModeChanged event
+    @JavascriptInterface
+    fun getCanRequestSystemNightMode(): Boolean = getCanSetSystemNightMode()
 
     @SuppressLint("WrongConstant")
     @JvmOverloads

@@ -59,6 +59,7 @@ class HomeScreen2VM(
     private val _statusBarAppearance by useBridgeSettingState(_app, BridgeSettings.statusBarAppearance)
     private val _navigationBarAppearance by useBridgeSettingState(_app, BridgeSettings.navigationBarAppearance)
     private val _drawWebViewOverscrollEffects = useBridgeSettingState(_app, BridgeSettings.drawWebViewOverscrollEffects)
+    private val _lockHomeScreenToPortrait by useBridgeSettingState(_app, BridgeSettings.lockHomeScreenToPortrait)
     private val _showBridgeButton by useBridgeSettingState(_app, BridgeSettings.showBridgeButton)
     private val _showLaunchAppsWhenBridgeButtonCollapsed by useBridgeSettingState(_app, BridgeSettings.showLaunchAppsWhenBridgeButtonCollapsed)
 
@@ -83,6 +84,7 @@ class HomeScreen2VM(
             drawSystemWallpaperBehindWebView = _drawSystemWallpaperBehindWebView,
             statusBarAppearance = _statusBarAppearance,
             navigationBarAppearance = _navigationBarAppearance,
+            lockToPortrait = _lockHomeScreenToPortrait,
         )
     }
 

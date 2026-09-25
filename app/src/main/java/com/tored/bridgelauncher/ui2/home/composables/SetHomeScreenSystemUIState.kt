@@ -1,6 +1,7 @@
 package com.tored.bridgelauncher.ui2.home.composables
 
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -21,12 +22,20 @@ fun SetHomeScreenSystemUIState(systemUIState: HomeScreenSystemUIState)
         val showWallpaper = systemUIState.drawSystemWallpaperBehindWebView
         val statusBarAppearance = systemUIState.statusBarAppearance
         val navigationBarAppearance = systemUIState.navigationBarAppearance
+        val lockToPortrait = systemUIState.lockToPortrait
 
-        val currentWindow = (currentView.context as? Activity)?.window
+        val currentActivity = currentView.context as? Activity
             ?: throw Exception("Attempt to access a window from outside an activity.")
+        val currentWindow = currentActivity.window
 
         SideEffect()
         {
+            currentActivity.requestedOrientation = when (lockToPortrait)
+            {
+                true -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                false -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+
             val insetsController = WindowCompat.getInsetsController(currentWindow, currentView)
 
             if (showWallpaper)

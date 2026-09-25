@@ -8,4 +8,5 @@ data class HomeScreenSystemUIState(
     val statusBarAppearance: SystemBarAppearanceOptions,
     val navigationBarAppearance: SystemBarAppearanceOptions,
     val drawSystemWallpaperBehindWebView: Boolean,
+    val lockToPortrait: Boolean = false,
 )

@@ -43,6 +43,11 @@ object BridgeSettings
         displayName = "Draw WebView overscroll effects",
     )
 
+    val lockHomeScreenToPortrait = BridgeSetting.bool(
+        key = "lockHomeScreenToPortrait",
+        displayName = "Lock home screen to portrait",
+    )
+
     val showBridgeButton = BridgeSetting.bool(
         key = "showBridgeButton",
         defaultValue = true,
@@ -66,6 +71,7 @@ val ResettableBridgeSettings = with(BridgeSettings)
         statusBarAppearance,
         navigationBarAppearance,
         drawWebViewOverscrollEffects,
+        lockHomeScreenToPortrait,
         showBridgeButton,
         showLaunchAppsWhenBridgeButtonCollapsed,
     )
