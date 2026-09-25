@@ -50,8 +50,11 @@ Single module `app/`, package `com.tored.bridgelauncher` (paths below are relati
      - Return complex data as a JSON string (kotlinx.serialization), or expose it as a `get…URL()` pointing to a `BridgeServer` endpoint.
    - **Event:** add a model class in `api2/bridgetojs/events/<group>/`, then emit it from `BridgeToJSAPI.kt`.
    - Declare any new permissions, services or receivers in `AndroidManifest.xml`. Gate version-specific calls with `utils/CurrentAndroidVersion`.
-2. **Types and mock (other repos, not cloned here):** every new or changed method or event must also be added to `Bridge.d.ts` in [bridgelauncher/api](https://github.com/bridgelauncher/api) and to `BridgeMock` in [bridgelauncher/api-mock](https://github.com/bridgelauncher/api-mock), with **exactly the same name** as in Kotlin. Since those repos aren't available locally, end every API change by writing out the exact TS declaration and mock stub needed, so they can be applied there.
-3. **Consumer:** the web launcher must guard every new call with `bridgeHas('methodName')`, so it keeps working on Bridge builds without the method.
+2. **Types and mock:** the web launcher is cloned at `~/Proyectos/api-tester` (the folder name is historical; it has its own CLAUDE.md). The upstream `api`/`api-mock` repos are not forked. Instead, declare new methods there with **exactly the same name** as in Kotlin:
+   - in `src/types/bridge-fork.d.ts`, by module augmentation of `JSToBridgeAPI`;
+   - in `ForkBridgeMock`, in `src/mock/injectBridgeMockInDev.ts`.
+   `BridgeEventMap` upstream is a `type`, so new events can't be added by augmentation. Type them locally where the launcher handles them.
+3. **Consumer:** the web launcher must guard every new call with `bridgeHas('methodName')` and fall back gracefully, so it keeps working on stock Bridge. Run `npm run type-check` and `npx vitest run --dir src` there. The user deploys it with `npm run deploy`.
 4. **Verify on device:** build, install over adb, then ask the user to test it with a checklist (see "Build & run").
 
 ## Code style
