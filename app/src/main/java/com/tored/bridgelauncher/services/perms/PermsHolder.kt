@@ -9,6 +9,7 @@ import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
 import com.tored.bridgelauncher.services.settings2.useBridgeSettingStateFlow
 import com.tored.bridgelauncher.utils.CurrentAndroidVersion
+import com.tored.bridgelauncher.utils.checkCanAccessNotificationPolicy
 import com.tored.bridgelauncher.utils.checkCanReadNotifications
 import com.tored.bridgelauncher.utils.checkCanSetSystemNightMode
 import com.tored.bridgelauncher.utils.checkCanWriteSystemSettings
@@ -40,6 +41,9 @@ class PermsHolder(
 
     private val _canWriteSystemSettingsState = MutableStateFlow(_context.checkCanWriteSystemSettings())
     val canWriteSystemSettingsState = _canWriteSystemSettingsState.asStateFlow()
+
+    private val _canAccessNotificationPolicyState = MutableStateFlow(_context.checkCanAccessNotificationPolicy())
+    val canAccessNotificationPolicyState = _canAccessNotificationPolicyState.asStateFlow()
 
     // usage access is an app op, read through the holder that uses it
     var checkCanReadUsageStats: () -> Boolean = { false }
@@ -100,6 +104,7 @@ class PermsHolder(
         _canSetSystemNightModeState.value = canSetSystemNightMode
         _canReadNotificationsState.value = canReadNotifications
         _canWriteSystemSettingsState.value = canWriteSystemSettings
+        _canAccessNotificationPolicyState.value = _context.checkCanAccessNotificationPolicy()
         _canReadCalendarState.value = checkCanReadCalendar()
         _canReadUsageStatsState.value = checkCanReadUsageStats()
         _canReadContactsState.value = isGranted(Manifest.permission.READ_CONTACTS)

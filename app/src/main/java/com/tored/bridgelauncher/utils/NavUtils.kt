@@ -189,6 +189,12 @@ fun Context.startWriteSystemSettingsPermissionActivity()
     startActivity(Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:$packageName")))
 }
 
+/** The list of apps with "Do Not Disturb access"; Android has no per-app deep link for this one. */
+fun Context.startNotificationPolicyAccessSettingsActivity()
+{
+    startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+}
+
 fun Context.tryStartAndroidAccessibilitySettingsActivity() = tryOrShowErrorToast { startAndroidAccessiblitySettingsActivity() }
 fun Context.startAndroidAccessiblitySettingsActivity()
 {

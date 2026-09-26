@@ -11,6 +11,7 @@ import android.database.ContentObserver
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.location.LocationManager
+import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
@@ -18,11 +19,15 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
+import com.tored.bridgelauncher.api2.shared.RingerModeStringOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 
 private const val TAG = "QuickSettingsHolder"
+
+// hidden from the public SDK (no AudioManager constant), but the standard way apps observe volume changes
+private const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
 
 private const val MAX_SCREEN_BRIGHTNESS = 255
 
@@ -34,9 +39,10 @@ data class ScreenBrightness(
 )
 
 /**
- * System toggles that an app can still change itself: flashlight, screen brightness, auto-rotate
- * and master sync. Wi-Fi, Bluetooth, mobile data and location can't be toggled by apps on current
- * Android versions; for those, projects can only read whether they're on and open the system panels.
+ * System toggles that an app can still change itself: flashlight, screen brightness, auto-rotate,
+ * master sync, ringer mode and media volume. Wi-Fi, Bluetooth, mobile data and location can't be
+ * toggled by apps on current Android versions; for those, projects can only read whether they're
+ * on and open the system panels.
  */
 class QuickSettingsHolder(
     private val _context: Context,
@@ -48,6 +54,7 @@ class QuickSettingsHolder(
     private val _wifiManager = _context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     private val _bluetoothAdapter: BluetoothAdapter? = (_context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
     private val _locationManager = _context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private val _audioManager = _context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     /** A back camera with a flash unit, or null if the device has no flashlight. */
     val flashlightCameraId: String? = try
@@ -83,6 +90,12 @@ class QuickSettingsHolder(
 
     private val _isLocationOn = MutableStateFlow(LocationManagerCompat.isLocationEnabled(_locationManager))
     val isLocationOn = _isLocationOn.asStateFlow()
+
+    private val _ringerMode = MutableStateFlow(readRingerMode())
+    val ringerMode = _ringerMode.asStateFlow()
+
+    private val _musicVolume = MutableStateFlow(readMusicVolume())
+    val musicVolume = _musicVolume.asStateFlow()
 
 
     fun startup()
@@ -126,6 +139,10 @@ class QuickSettingsHolder(
             _isLocationOn.value = LocationManagerCompat.isLocationEnabled(_locationManager)
         }
         registerReceiver(BluetoothAdapter.ACTION_STATE_CHANGED) { _isBluetoothOn.value = readIsBluetoothOn() }
+        registerReceiver(AudioManager.RINGER_MODE_CHANGED_ACTION) { _ringerMode.value = readRingerMode() }
+        // fired for any stream's volume; not part of the public SDK (no AudioManager constant), but
+        // it's the standard, widely used way apps observe volume changes
+        registerReceiver(VOLUME_CHANGED_ACTION) { _musicVolume.value = readMusicVolume() }
     }
 
     /**
@@ -179,6 +196,22 @@ class QuickSettingsHolder(
         ContentResolver.setMasterSyncAutomatically(isOn)
     }
 
+    /** Requires "Do Not Disturb access" ([android.app.NotificationManager.isNotificationPolicyAccessGranted]). */
+    fun setRingerMode(androidRingerMode: Int)
+    {
+        _audioManager.ringerMode = androidRingerMode
+    }
+
+    /** Sets the media volume (0 to 1). No special permission needed. */
+    fun setMusicVolume(level: Float)
+    {
+        if (level.isNaN() || level < 0f || level > 1f)
+            throw Exception("Volume level must be between 0 and 1 (got $level).")
+
+        val max = _audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        _audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (level * max).toInt().coerceIn(0, max), 0)
+    }
+
     // endregion
 
 
@@ -212,6 +245,14 @@ class QuickSettingsHolder(
     }
 
     private fun readIsAutoRotateOn() = Settings.System.getInt(_resolver, Settings.System.ACCELEROMETER_ROTATION, 0) == 1
+
+    private fun readRingerMode() = RingerModeStringOptions.fromAudioManagerRingerMode(_audioManager.ringerMode)
+
+    private fun readMusicVolume(): Float
+    {
+        val max = _audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+        return _audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / max
+    }
 
     private fun observeSystemSetting(vararg names: String, onChange: () -> Unit)
     {

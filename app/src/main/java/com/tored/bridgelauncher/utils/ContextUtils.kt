@@ -1,6 +1,7 @@
 package com.tored.bridgelauncher.utils
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -32,6 +33,9 @@ fun Context.checkCanSetSystemNightMode() = ActivityCompat.checkSelfPermission(th
 fun Context.checkCanWriteSystemSettings() = Settings.System.canWrite(this)
 
 fun Context.checkCanReadNotifications() = NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
+
+/** "Do Not Disturb access", needed to change the ringer mode from Android M on. */
+fun Context.checkCanAccessNotificationPolicy() = (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).isNotificationPolicyAccessGranted
 
 fun Context.checkStoragePerms(): Boolean
 {

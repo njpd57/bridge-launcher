@@ -10,6 +10,7 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.AfterResumeEven
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.BeforePauseEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.NewIntentEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.calendar.CalendarChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.battery.BatteryChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.connectivity.ConnectivityChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadCalendarChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadUsageStatsChangedEvent
@@ -23,12 +24,15 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.Notificatio
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanLockScreenChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadNotificationsChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanWriteSystemSettingsChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanAccessNotificationPolicyChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.AutoRotateChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.BluetoothEnabledChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.LocationEnabledChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.WifiEnabledChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.FlashlightChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.MasterSyncChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.RingerModeChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.MusicVolumeChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.ScreenBrightnessChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanRequestSystemNightModeChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.BridgeButtonVisibilityChangedEvent
@@ -49,6 +53,7 @@ import com.tored.bridgelauncher.services.apps.InstalledAppListChangeEvent
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
+import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.notifications.NotificationListChangeEvent
@@ -82,6 +87,7 @@ class BridgeToJSAPI(
     private val _connectivity: ConnectivityHolder,
     private val _calendar: CalendarHolder,
     private val _contacts: ContactsHolder,
+    private val _battery: BatteryHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -151,6 +157,7 @@ class BridgeToJSAPI(
             onCollect(canProjectsLockScreen) { CanLockScreenChangedEvent(it) }
             onCollect(canReadNotificationsState) { CanReadNotificationsChangedEvent(it) }
             onCollect(canWriteSystemSettingsState) { CanWriteSystemSettingsChangedEvent(it) }
+            onCollect(canAccessNotificationPolicyState) { CanAccessNotificationPolicyChangedEvent(it) }
             onCollect(canReadCalendarState) { CanReadCalendarChangedEvent(it) }
             onCollect(canReadUsageStatsState) { CanReadUsageStatsChangedEvent(it) }
             onCollect(canReadContactsState) { CanReadContactsChangedEvent(it) }
@@ -182,6 +189,8 @@ class BridgeToJSAPI(
             onCollect(isWifiOn) { WifiEnabledChangedEvent(it) }
             onCollect(isBluetoothOn) { BluetoothEnabledChangedEvent(it) }
             onCollect(isLocationOn) { LocationEnabledChangedEvent(it) }
+            onCollect(ringerMode) { RingerModeChangedEvent(it) }
+            onCollect(musicVolume) { MusicVolumeChangedEvent(it) }
         }
 
         with(_contacts)
@@ -197,6 +206,11 @@ class BridgeToJSAPI(
         with(_connectivity)
         {
             onCollect(connectivity) { ConnectivityChangedEvent(it) }
+        }
+
+        with(_battery)
+        {
+            onCollect(battery) { BatteryChangedEvent(it) }
         }
 
         with(_media)

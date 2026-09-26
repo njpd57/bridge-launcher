@@ -46,11 +46,14 @@ import com.tored.bridgelauncher.api2.shared.BridgeThemeStringOptions
 import com.tored.bridgelauncher.api2.shared.DefaultAppRoleStringOptions
 import com.tored.bridgelauncher.api2.shared.MediaActionStringOptions
 import com.tored.bridgelauncher.api2.shared.OverscrollEffectsStringOptions
+import com.tored.bridgelauncher.api2.shared.RingerModeStringOptions
 import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemNightModeStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemPanelStringOptions
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
+import com.tored.bridgelauncher.services.battery.BatteryHolder
+import com.tored.bridgelauncher.services.battery.SerializableBattery
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.connectivity.SerializableConnectivity
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
@@ -79,6 +82,7 @@ import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsOptions
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsSnapshot
 import com.tored.bridgelauncher.utils.CurrentAndroidVersion
 import com.tored.bridgelauncher.utils.checkCanReadNotifications
+import com.tored.bridgelauncher.utils.checkCanAccessNotificationPolicy
 import com.tored.bridgelauncher.utils.checkCanWriteSystemSettings
 import com.tored.bridgelauncher.utils.getIsSystemInNightMode
 import com.tored.bridgelauncher.utils.launchApp
@@ -93,6 +97,7 @@ import com.tored.bridgelauncher.utils.startBridgeAppDrawerActivity
 import com.tored.bridgelauncher.utils.startBridgeSettingsActivity
 import com.tored.bridgelauncher.utils.startDevConsoleActivity
 import com.tored.bridgelauncher.utils.startNotificationAccessSettingsActivity
+import com.tored.bridgelauncher.utils.startNotificationPolicyAccessSettingsActivity
 import com.tored.bridgelauncher.utils.startWriteSystemSettingsPermissionActivity
 import com.tored.bridgelauncher.utils.startWallpaperPickerActivity
 import com.tored.bridgelauncher.utils.toPx
@@ -106,6 +111,7 @@ private const val TAG = "JSToBridge"
 
 class JSToBridgeAPI(
     private val _app: BridgeLauncherApplication,
+    private val _battery: BatteryHolder,
     private val _windowInsetsHolder: WindowInsetsHolder,
     private val _displayShapeHolder: DisplayShapeHolder,
     private val _notifications: NotificationsHolder,
@@ -379,6 +385,15 @@ class JSToBridgeAPI(
     // endregion
 
 
+    // region battery
+
+    /** JSON `{ level, isCharging, pluggedType }`, level 0 to 100, `pluggedType` `'ac' | 'usb' | 'wireless' | 'other'` or null. Fires `batteryChanged`. */
+    @JavascriptInterface
+    fun getBattery(): String = Json.encodeToString(SerializableBattery.serializer(), _battery.battery.value)
+
+    // endregion
+
+
     // region media
 
     /** The current media session as JSON, or `null` (needs notification access). Fires `mediaSessionChanged`. */
@@ -538,6 +553,50 @@ class JSToBridgeAPI(
     {
         if (!_app.checkCanWriteSystemSettings())
             throw Exception("Bridge needs the \"Modify system settings\" permission for this. Open it with requestOpenWriteSystemSettingsPermission().")
+    }
+
+    /** Whether the user gave Bridge "Do Not Disturb access", needed to change the ringer mode. */
+    @JavascriptInterface
+    fun getCanAccessNotificationPolicy() = _app.checkCanAccessNotificationPolicy()
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenNotificationPolicyAccessSettings(showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) { startNotificationPolicyAccessSettingsActivity() }
+    }
+
+    /** `'normal' | 'vibrate' | 'silent'`. Fires `ringerModeChanged`. */
+    @JavascriptInterface
+    fun getRingerMode(): String = _quickSettings.ringerMode.value.rawValue
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetRingerMode(mode: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            assertCanAccessNotificationPolicy()
+            _quickSettings.setRingerMode(RingerModeStringOptions.toAudioManagerRingerModeOrThrow(mode))
+        }
+    }
+
+    /** 0 to 1 (media volume). Fires `musicVolumeChanged`. */
+    @JavascriptInterface
+    fun getMusicVolume() = _quickSettings.musicVolume.value
+
+    /** No special permission needed. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetMusicVolume(level: Float, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed) { _quickSettings.setMusicVolume(level) }
+    }
+
+    private fun assertCanAccessNotificationPolicy()
+    {
+        if (!_app.checkCanAccessNotificationPolicy())
+            throw Exception("Bridge needs \"Do Not Disturb access\" for this. Open it with requestOpenNotificationPolicyAccessSettings().")
     }
 
     // endregion

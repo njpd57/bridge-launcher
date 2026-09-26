@@ -10,6 +10,7 @@ import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.services.BridgeServices
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
+import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.contacts.ContactsHolder
@@ -86,6 +87,7 @@ class BridgeLauncherApplication : Application()
         val calendarHolder = CalendarHolder(this)
         val usageStatsHolder = UsageStatsHolder(this)
         val contactsHolder = ContactsHolder(this)
+        val batteryHolder = BatteryHolder(this)
         permsHolder.checkCanReadUsageStats = { usageStatsHolder.canRead }
         permsHolder.notifyPermsMightHaveChanged()
         val systemUIModeHolder = SystemUIModeHolder(
@@ -105,10 +107,12 @@ class BridgeLauncherApplication : Application()
             _connectivity = connectivityHolder,
             _calendar = calendarHolder,
             _contacts = contactsHolder,
+            _battery = batteryHolder,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
             _app = this,
+            _battery = batteryHolder,
             _windowInsetsHolder = windowInsetsHolder,
             _displayShapeHolder = displayShapeHolder,
             _notifications = notificationsHolder,
@@ -164,6 +168,7 @@ class BridgeLauncherApplication : Application()
             calendarHolder = calendarHolder,
             usageStatsHolder = usageStatsHolder,
             contactsHolder = contactsHolder,
+            batteryHolder = batteryHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,
@@ -195,6 +200,7 @@ class BridgeLauncherApplication : Application()
         services.installedAppsHolder.startup()
         services.quickSettingsHolder.startup()
         services.connectivityHolder.startup()
+        services.batteryHolder.startup()
         services.calendarHolder.startObservingIfPossible()
         services.contactsHolder.startObservingIfPossible()
         services.bridgeToJSInterface.startup()
