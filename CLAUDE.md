@@ -27,7 +27,7 @@ Everything below is on `main`, tested on the Flip5 and used by the web launcher 
 - `WindowInsetsSnapshot.getSnapshot()` passes `(left, top, right, bottom)` positionally to a constructor declared `(top, left, right, bottom)`, so **top and left are swapped in every inset** (getters and events). On the Flip5 in portrait the status bar arrives as `left: 33, top: 0`. The fix is to pass them by name; launchers would need a way to tell fixed builds apart (e.g. a new method).
 - Insets events are sent as `ImeWindowInsetsChanged` (enum name) with the value in `insets`, not `imeWindowInsetsChanged` / `newValue` as the API types say.
 
-**Deprioritized by the user:** 1.6 remote debugging, `requestOpenDarkModeSettings`, a generic `requestStartActivity`. **Remaining from the roadmap:** 3.1 native widgets. **Left for the end, together (user's decision):** fixing the insets top/left swap and updating the Confluence page. Roadmap item 2.1 (status bar insets) turned out to be the top/left swap above.
+**Deprioritized by the user:** 1.6 remote debugging, `requestOpenDarkModeSettings`, a generic `requestStartActivity`. **Also deprioritized:** 3.1 native widgets (the user prefers HTML widgets in the launcher; if revisited, host `AppWidgetHostView`s offscreen, serve snapshots to the WebView and forward taps, rather than overlaying native views). **Remaining from the roadmap:** nothing. **Left for the end, together (user's decision):** fixing the insets top/left swap and updating the Confluence page. Roadmap item 2.1 (status bar insets) turned out to be the top/left swap above.
 
 ## Scope rules
 
