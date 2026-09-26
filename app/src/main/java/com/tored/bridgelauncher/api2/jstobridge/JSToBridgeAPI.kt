@@ -9,6 +9,7 @@ import android.app.UiModeManager
 import android.app.WallpaperManager
 import android.app.admin.DevicePolicyManager
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -26,6 +27,8 @@ import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.CalendarEventsEndpoint
+import com.tored.bridgelauncher.api2.webview.BridgeRuntimePermissionRequester
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.MediaArtEndpoint
@@ -48,6 +51,13 @@ import com.tored.bridgelauncher.services.media.SerializableMediaSession
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
+import com.tored.bridgelauncher.services.calendar.CalendarHolder
+import com.tored.bridgelauncher.services.perms.PermsHolder
+import android.content.ContentUris
+import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.provider.CalendarContract
 import com.tored.bridgelauncher.services.quicksettings.ScreenBrightness
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
@@ -96,6 +106,8 @@ class JSToBridgeAPI(
     private val _media: MediaSessionsHolder,
     private val _connectivity: ConnectivityHolder,
     private val _shortcuts: AppShortcutsHolder,
+    private val _calendar: CalendarHolder,
+    private val _perms: PermsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -107,6 +119,7 @@ class JSToBridgeAPI(
 
     var webView: WebView? = null
     var homeScreenContext: Context? = null
+    var permissionRequester: BridgeRuntimePermissionRequester? = null
 
 
     // SETTING STATES
@@ -471,6 +484,72 @@ class JSToBridgeAPI(
     {
         if (!_app.checkCanWriteSystemSettings())
             throw Exception("Bridge needs the \"Modify system settings\" permission for this. Open it with requestOpenWriteSystemSettingsPermission().")
+    }
+
+    // endregion
+
+
+    // region calendar
+
+    /** Whether Bridge may read the calendar (READ_CALENDAR). Fires `canReadCalendarChanged`. */
+    @JavascriptInterface
+    fun getCanReadCalendar() = _calendar.canRead
+
+    /**
+     * Shows Android's dialog asking for calendar access (or, if the user refused it for good, opens Bridge's
+     * app settings). Returns false only if it couldn't ask; the answer comes as `canReadCalendarChanged`.
+     */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestCalendarPermission(showToastIfFailed: Boolean = true): Boolean
+    {
+        if (_calendar.canRead) return true
+        return _app.tryRun(showToastIfFailed)
+        {
+            val requester = permissionRequester ?: throw Exception("The home screen isn't ready to ask for permissions.")
+            Handler(Looper.getMainLooper()).post {
+                requester.request(android.Manifest.permission.READ_CALENDAR) {
+                    _perms.notifyPermsMightHaveChanged()
+                    _calendar.startObservingIfPossible()
+                }
+            }
+        }
+    }
+
+    /** JSON `{ events: [...] }` of event instances overlapping [from, to) (milliseconds), by start time. 403 without permission. */
+    @JavascriptInterface
+    fun getCalendarEventsURL(from: Long, to: Long) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_CALENDAR_EVENTS,
+            CalendarEventsEndpoint.QUERY_FROM to from,
+            CalendarEventsEndpoint.QUERY_TO to to,
+        )
+
+    /** Opens one occurrence of an event in the calendar app. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenCalendarEvent(eventId: Long, begin: Long, end: Long, showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed)
+        {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId))
+                    .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, begin)
+                    .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, end)
+            )
+        }
+    }
+
+    /** Opens the calendar app at a time (e.g. a day tapped in a month view). */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenCalendarAt(time: Long, showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed)
+        {
+            val uri = CalendarContract.CONTENT_URI.buildUpon().appendPath("time").also { ContentUris.appendId(it, time) }.build()
+            startActivity(Intent(Intent.ACTION_VIEW, uri))
+        }
     }
 
     // endregion
@@ -1094,13 +1173,22 @@ class JSToBridgeAPI(
         }
     }
 
+    /**
+     * Runs [f] with a context that starts other apps in their own task, as launchers should (otherwise the
+     * app is stacked on top of the home screen in Bridge's task). Prefers the home screen activity, and falls
+     * back to the application context if it's not registered at the moment.
+     */
     private fun tryRunInHomescreenContext(showToastIfFailed: Boolean, f: Context.() -> Unit): Boolean
     {
-        return when(val context = homeScreenContext)
-        {
-            null -> false.also { if (showToastIfFailed) _app.showErrorToast("homeScreenContext is null") }
-            else -> context.tryRun(showToastIfFailed, f)
-        }
+        val context = homeScreenContext
+            ?: _app.also { Log.w(TAG, "homeScreenContext is null, using the application context") }
+        return NewTaskContext(context).tryRun(showToastIfFailed, f)
+    }
+
+    private class NewTaskContext(base: Context) : ContextWrapper(base)
+    {
+        override fun startActivity(intent: Intent) = super.startActivity(Intent(intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        override fun startActivity(intent: Intent, options: Bundle?) = super.startActivity(Intent(intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), options)
     }
 
     private fun Context.tryEditPrefs(showToastIfFailed: Boolean, f: (MutablePreferences) -> Unit): Boolean

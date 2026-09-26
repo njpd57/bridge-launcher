@@ -39,6 +39,9 @@
     <!-- reading whether Wi-Fi / Bluetooth are on (normal permissions; BLUETOOTH is only needed up to Android 11) -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
+    <!-- calendar events for the project (asked with Android's dialog) -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
     <!-- the network in use and the Wi-Fi signal level (normal permission) -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission

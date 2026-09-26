@@ -17,6 +17,8 @@ import com.tored.bridgelauncher.api2.bridgetojs.BridgeToJSAPI
 import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.api2.webview.BridgeFileChooser
+import com.tored.bridgelauncher.api2.webview.BridgeRuntimePermissionRequester
+import com.tored.bridgelauncher.services.calendar.CalendarHolder
 import com.tored.bridgelauncher.api2.webview.BridgeWebChromeClient
 import com.tored.bridgelauncher.api2.webview.BridgeWebViewClient
 import com.tored.bridgelauncher.services.BridgeServices
@@ -55,6 +57,7 @@ class HomeScreen2VM(
     private val _displayShapeHolder: DisplayShapeHolder,
     private val _quickSettings: QuickSettingsHolder,
     private val _connectivity: ConnectivityHolder,
+    private val _calendar: CalendarHolder,
 ) : ViewModel()
 {
     // SETTINGS STATE
@@ -145,9 +148,10 @@ class HomeScreen2VM(
         drawOverscrollEffects = _drawWebViewOverscrollEffects
     )
 
-    fun afterCreate(context: Context, fileChooser: BridgeFileChooser)
+    fun afterCreate(context: Context, fileChooser: BridgeFileChooser, permissionRequester: BridgeRuntimePermissionRequester)
     {
         _jsToBridgeInterface.homeScreenContext = context
+        _jsToBridgeInterface.permissionRequester = permissionRequester
         _chromeClient.fileChooser = fileChooser
     }
 
@@ -172,6 +176,8 @@ class HomeScreen2VM(
         _connectivity.startTrafficPolling()
         _lifecycleEventsHolder.notifyHomeScreenResumed()
         _permsHolder.notifyPermsMightHaveChanged()
+        // the calendar permission may have been granted in Android's settings
+        _calendar.startObservingIfPossible()
     }
 
     fun onConfigurationChanged()
@@ -179,9 +185,12 @@ class HomeScreen2VM(
         _systemUIModeHolder.onConfigurationChanged()
     }
 
-    fun beforeDestroy()
+    fun beforeDestroy(context: Context)
     {
+        // a new home screen instance may have registered itself already; only clear our own
+        if (_jsToBridgeInterface.homeScreenContext !== context) return
         _jsToBridgeInterface.homeScreenContext = null
+        _jsToBridgeInterface.permissionRequester = null
         _chromeClient.fileChooser = null
     }
 
@@ -216,6 +225,7 @@ class HomeScreen2VM(
                     _displayShapeHolder = displayShapeHolder,
                     _quickSettings = quickSettingsHolder,
                     _connectivity = connectivityHolder,
+                    _calendar = calendarHolder,
                     _systemUIModeHolder = systemUIModeHolder,
                 )
             }

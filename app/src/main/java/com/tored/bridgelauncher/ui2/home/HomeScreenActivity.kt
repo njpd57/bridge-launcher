@@ -13,6 +13,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import com.tored.bridgelauncher.api2.webview.BridgeFileChooser
+import com.tored.bridgelauncher.api2.webview.BridgeRuntimePermissionRequester
+import com.tored.bridgelauncher.utils.openAppInfo
 import com.tored.bridgelauncher.ui2.home.composables.HomeScreen2
 import com.tored.bridgelauncher.ui2.theme.BridgeLauncherTheme
 
@@ -38,6 +40,30 @@ class HomeScreenActivity : ComponentActivity()
         _pendingFileChooserResult = null
     }
 
+    // like the file chooser: one pending request at a time
+    private var _pendingPermission: String? = null
+    private var _pendingPermissionResult: ((Boolean) -> Unit)? = null
+
+    private val _permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission())
+    { isGranted ->
+        val permission = _pendingPermission
+        // refused for good ("don't ask again", or refused twice): Android won't show the dialog anymore,
+        // so the only way left is Bridge's app settings
+        if (!isGranted && permission != null && !shouldShowRequestPermissionRationale(permission))
+            openAppInfo(packageName)
+
+        _pendingPermissionResult?.invoke(isGranted)
+        _pendingPermission = null
+        _pendingPermissionResult = null
+    }
+
+    private val _permissionRequester = BridgeRuntimePermissionRequester { permission, onResult ->
+        _pendingPermissionResult?.invoke(false)
+        _pendingPermission = permission
+        _pendingPermissionResult = onResult
+        _permissionLauncher.launch(permission)
+    }
+
     private val _fileChooser = BridgeFileChooser { intent, onResult ->
         _pendingFileChooserResult?.invoke(null)
         _pendingFileChooserResult = onResult
@@ -57,7 +83,7 @@ class HomeScreenActivity : ComponentActivity()
     {
         _modeman = getSystemService(UI_MODE_SERVICE) as UiModeManager
 
-        _homeScreenVM.afterCreate(this, _fileChooser)
+        _homeScreenVM.afterCreate(this, _fileChooser, _permissionRequester)
 
         enableEdgeToEdge()
 
@@ -111,7 +137,7 @@ class HomeScreenActivity : ComponentActivity()
     {
         _pendingFileChooserResult?.invoke(null)
         _pendingFileChooserResult = null
-        _homeScreenVM.beforeDestroy()
+        _homeScreenVM.beforeDestroy(this)
         super.onDestroy()
     }
 }

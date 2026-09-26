@@ -9,7 +9,9 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.apps.AppRemovedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.AfterResumeEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.BeforePauseEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.NewIntentEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.calendar.CalendarChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.connectivity.ConnectivityChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadCalendarChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.media.MediaSessionChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationPostedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationRemovedEvent
@@ -41,6 +43,7 @@ import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.services.apps.InstalledAppListChangeEvent
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
+import com.tored.bridgelauncher.services.calendar.CalendarHolder
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.notifications.NotificationListChangeEvent
@@ -72,6 +75,7 @@ class BridgeToJSAPI(
     private val _quickSettings: QuickSettingsHolder,
     private val _media: MediaSessionsHolder,
     private val _connectivity: ConnectivityHolder,
+    private val _calendar: CalendarHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -141,6 +145,7 @@ class BridgeToJSAPI(
             onCollect(canProjectsLockScreen) { CanLockScreenChangedEvent(it) }
             onCollect(canReadNotificationsState) { CanReadNotificationsChangedEvent(it) }
             onCollect(canWriteSystemSettingsState) { CanWriteSystemSettingsChangedEvent(it) }
+            onCollect(canReadCalendarState) { CanReadCalendarChangedEvent(it) }
         }
 
         with(_systemUIMode)
@@ -168,6 +173,11 @@ class BridgeToJSAPI(
             onCollect(isWifiOn) { WifiEnabledChangedEvent(it) }
             onCollect(isBluetoothOn) { BluetoothEnabledChangedEvent(it) }
             onCollect(isLocationOn) { LocationEnabledChangedEvent(it) }
+        }
+
+        with(_calendar)
+        {
+            onCollect(changes) { CalendarChangedEvent() }
         }
 
         with(_connectivity)

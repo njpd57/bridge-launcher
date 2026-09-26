@@ -10,6 +10,7 @@ import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.services.BridgeServices
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
+import com.tored.bridgelauncher.services.calendar.CalendarHolder
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.devconsole.DevConsoleMessagesHolder
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
@@ -80,6 +81,7 @@ class BridgeLauncherApplication : Application()
         val mediaSessionsHolder = MediaSessionsHolder(this)
         val connectivityHolder = ConnectivityHolder(this)
         val appShortcutsHolder = AppShortcutsHolder(this)
+        val calendarHolder = CalendarHolder(this)
         val systemUIModeHolder = SystemUIModeHolder(
             _uiModeManager = uiModeManager
         )
@@ -95,6 +97,7 @@ class BridgeLauncherApplication : Application()
             _quickSettings = quickSettingsHolder,
             _media = mediaSessionsHolder,
             _connectivity = connectivityHolder,
+            _calendar = calendarHolder,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
@@ -106,6 +109,8 @@ class BridgeLauncherApplication : Application()
             _media = mediaSessionsHolder,
             _connectivity = connectivityHolder,
             _shortcuts = appShortcutsHolder,
+            _calendar = calendarHolder,
+            _perms = permsHolder,
         )
 
         val bridgeServer = BridgeServer(
@@ -115,6 +120,7 @@ class BridgeLauncherApplication : Application()
             _notifications = notificationsHolder,
             _media = mediaSessionsHolder,
             _shortcuts = appShortcutsHolder,
+            _calendar = calendarHolder,
         )
 
         val consoleMessagesHolder = DevConsoleMessagesHolder()
@@ -144,6 +150,7 @@ class BridgeLauncherApplication : Application()
             mediaSessionsHolder = mediaSessionsHolder,
             connectivityHolder = connectivityHolder,
             appShortcutsHolder = appShortcutsHolder,
+            calendarHolder = calendarHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,
@@ -175,6 +182,7 @@ class BridgeLauncherApplication : Application()
         services.installedAppsHolder.startup()
         services.quickSettingsHolder.startup()
         services.connectivityHolder.startup()
+        services.calendarHolder.startObservingIfPossible()
         services.bridgeToJSInterface.startup()
     }
 }

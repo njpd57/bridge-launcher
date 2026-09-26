@@ -1,6 +1,9 @@
 package com.tored.bridgelauncher.services.perms
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import android.util.Log
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
@@ -37,6 +40,10 @@ class PermsHolder(
 
     private val _canWriteSystemSettingsState = MutableStateFlow(_context.checkCanWriteSystemSettings())
     val canWriteSystemSettingsState = _canWriteSystemSettingsState.asStateFlow()
+
+    private fun checkCanReadCalendar() = ContextCompat.checkSelfPermission(_context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+    private val _canReadCalendarState = MutableStateFlow(checkCanReadCalendar())
+    val canReadCalendarState = _canReadCalendarState.asStateFlow()
 
     private val _isAccessibilityServiceEnabled = useBridgeSettingStateFlow(_context.settingsDataStore, _scope, BridgeSettings.isAccessibilityServiceEnabled)
     private val _isDeviceAdminEnabled = useBridgeSettingStateFlow(_context.settingsDataStore, _scope, BridgeSettings.isDeviceAdminEnabled)
@@ -80,5 +87,6 @@ class PermsHolder(
         _canSetSystemNightModeState.value = canSetSystemNightMode
         _canReadNotificationsState.value = canReadNotifications
         _canWriteSystemSettingsState.value = canWriteSystemSettings
+        _canReadCalendarState.value = checkCanReadCalendar()
     }
 }
