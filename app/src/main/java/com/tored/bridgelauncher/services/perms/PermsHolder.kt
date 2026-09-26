@@ -6,6 +6,7 @@ import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
 import com.tored.bridgelauncher.services.settings2.useBridgeSettingStateFlow
 import com.tored.bridgelauncher.utils.CurrentAndroidVersion
+import com.tored.bridgelauncher.utils.checkCanReadNotifications
 import com.tored.bridgelauncher.utils.checkCanSetSystemNightMode
 import com.tored.bridgelauncher.utils.checkStoragePerms
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,9 @@ class PermsHolder(
 
     private val _canSetSystemNightModeState = MutableStateFlow(_context.checkCanSetSystemNightMode())
     val canSetSystemNightModeState = _canSetSystemNightModeState.asStateFlow()
+
+    private val _canReadNotificationsState = MutableStateFlow(_context.checkCanReadNotifications())
+    val canReadNotificationsState = _canReadNotificationsState.asStateFlow()
 
     private val _isAccessibilityServiceEnabled = useBridgeSettingStateFlow(_context.settingsDataStore, _scope, BridgeSettings.isAccessibilityServiceEnabled)
     private val _isDeviceAdminEnabled = useBridgeSettingStateFlow(_context.settingsDataStore, _scope, BridgeSettings.isDeviceAdminEnabled)
@@ -60,12 +64,15 @@ class PermsHolder(
 
 
     // intended to be called from onResume() - there is no API to listen for permission changes, so checks in onResume it is
+    // (the notification listener service also calls this when it gets connected or disconnected)
     fun notifyPermsMightHaveChanged()
     {
         val hasStoragePerms = _context.checkStoragePerms()
         val canSetSystemNightMode = _context.checkCanSetSystemNightMode()
+        val canReadNotifications = _context.checkCanReadNotifications()
         Log.d(TAG, "notifyPermsMightHaveChanged: hasStoragePerms = $hasStoragePerms, canSetSystemNightMode = $canSetSystemNightMode")
         _hasStoragePermsState.value = hasStoragePerms
         _canSetSystemNightModeState.value = canSetSystemNightMode
+        _canReadNotificationsState.value = canReadNotifications
     }
 }

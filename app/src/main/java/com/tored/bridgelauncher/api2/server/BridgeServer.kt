@@ -9,9 +9,12 @@ import com.tored.bridgelauncher.api2.server.endpoints.AppsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.BridgeFileServer
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.NotificationIconsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.NotificationsEndpoint
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.apps.SerializableInstalledApp
 import com.tored.bridgelauncher.services.iconpackcache.InstalledIconPacksHolder
+import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
@@ -43,6 +46,7 @@ class BridgeServer(
     private val _app: BridgeLauncherApplication,
     private val _apps: InstalledAppsHolder,
     private val _iconPacks: InstalledIconPacksHolder,
+    private val _notifications: NotificationsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main) + SupervisorJob()
@@ -62,6 +66,8 @@ class BridgeServer(
         ENDPOINT_APP_ICONS to AppIconsEndpoint(_apps, _iconPacks),
         ENDPOINT_ICON_PACKS to IconPacksEndpoint(_iconPacks),
         ENDPOINT_ICON_PACK_CONTENT to IconPackContentEndpoint(_iconPacks),
+        ENDPOINT_NOTIFICATIONS to NotificationsEndpoint(_notifications),
+        ENDPOINT_NOTIFICATION_ICONS to NotificationIconsEndpoint(_app, _notifications),
     )
 
     suspend fun handle(req: WebResourceRequest): WebResourceResponse?
@@ -112,5 +118,7 @@ class BridgeServer(
         const val ENDPOINT_APPS = "apps"
         const val ENDPOINT_APP_ICONS = "appicons"
         const val ENDPOINT_ICON_PACKS = "iconpacks"
+        const val ENDPOINT_NOTIFICATIONS = "notifications"
+        const val ENDPOINT_NOTIFICATION_ICONS = "notificationicons"
     }
 }

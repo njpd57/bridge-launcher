@@ -1,11 +1,14 @@
 package com.tored.bridgelauncher.utils
 
 import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import com.tored.bridgelauncher.services.apps.InstalledApp
+import com.tored.bridgelauncher.services.system.BridgeNotificationListenerService
 import com.tored.bridgelauncher.ui2.appdrawer.AppDrawerActivity
 import com.tored.bridgelauncher.ui2.devconsole.DevConsoleActivity
 import com.tored.bridgelauncher.ui2.settings.SettingsScreenActivity
@@ -142,6 +145,29 @@ fun Context.startExtStorageManagerPermissionActivity()
             )
         )
     }
+}
+
+/** Opens Bridge's page in the notification access settings, or the whole list where that page doesn't exist. */
+fun Context.startNotificationAccessSettingsActivity()
+{
+    if (CurrentAndroidVersion.supportsNotificationListenerDetailSettings())
+    {
+        val component = ComponentName(this, BridgeNotificationListenerService::class.java)
+        try
+        {
+            startActivity(
+                Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                    .putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, component.flattenToString())
+            )
+            return
+        }
+        catch (_: ActivityNotFoundException)
+        {
+            // fall back to the list below
+        }
+    }
+
+    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
 }
 
 fun Context.tryStartAndroidAccessibilitySettingsActivity() = tryOrShowErrorToast { startAndroidAccessiblitySettingsActivity() }

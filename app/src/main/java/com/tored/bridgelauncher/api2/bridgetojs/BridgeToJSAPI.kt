@@ -9,7 +9,10 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.apps.AppRemovedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.AfterResumeEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.BeforePauseEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.NewIntentEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationPostedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationRemovedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanLockScreenChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadNotificationsChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanRequestSystemNightModeChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.BridgeButtonVisibilityChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.BridgeThemeChangedEvent
@@ -28,6 +31,9 @@ import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.services.apps.InstalledAppListChangeEvent
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
+import com.tored.bridgelauncher.services.notifications.NotificationListChangeEvent
+import com.tored.bridgelauncher.services.notifications.NotificationsHolder
+import com.tored.bridgelauncher.services.notifications.toSerializable
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
@@ -49,6 +55,7 @@ class BridgeToJSAPI(
     private val _insets: WindowInsetsHolder,
     private val _systemUIMode: SystemUIModeHolder,
     private val _lifecycleEventsHolder: LifecycleEventsHolder,
+    private val _notifications: NotificationsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -116,6 +123,7 @@ class BridgeToJSAPI(
         {
             onCollect(canSetSystemNightModeState) { CanRequestSystemNightModeChangedEvent(it) }
             onCollect(canProjectsLockScreen) { CanLockScreenChangedEvent(it) }
+            onCollect(canReadNotificationsState) { CanReadNotificationsChangedEvent(it) }
         }
 
         with(_systemUIMode)
@@ -130,6 +138,17 @@ class BridgeToJSAPI(
                     stateFlow.collect { snapshot ->
                         sendBridgeEvent(WindowInsetsChangedEvent.fromSnapshot(option, snapshot))
                     }
+                }
+            }
+        }
+
+        with(_notifications)
+        {
+            onCollect(changeEventFlow) {
+                when (it)
+                {
+                    is NotificationListChangeEvent.Posted -> NotificationPostedEvent(it.notification.toSerializable())
+                    is NotificationListChangeEvent.Removed -> NotificationRemovedEvent(it.key)
                 }
             }
         }

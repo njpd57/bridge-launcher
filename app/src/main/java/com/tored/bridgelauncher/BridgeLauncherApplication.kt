@@ -17,6 +17,7 @@ import com.tored.bridgelauncher.services.iconpackcache.IconPackCache
 import com.tored.bridgelauncher.services.iconpackcache.InstalledIconPacksHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
 import com.tored.bridgelauncher.services.mockexport.MockExporter
+import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import com.tored.bridgelauncher.services.system.BridgeButtonQSTileService
 import com.tored.bridgelauncher.services.system.BridgeLauncherBroadcastReceiver
@@ -70,6 +71,7 @@ class BridgeLauncherApplication : Application()
         val lifecycleEventsHolder = LifecycleEventsHolder()
         val windowInsetsHolder = WindowInsetsHolder()
         val displayShapeHolder = DisplayShapeHolder()
+        val notificationsHolder = NotificationsHolder()
         val systemUIModeHolder = SystemUIModeHolder(
             _uiModeManager = uiModeManager
         )
@@ -81,18 +83,21 @@ class BridgeLauncherApplication : Application()
             _lifecycleEventsHolder = lifecycleEventsHolder,
             _apps = installedAppsHolder,
             _systemUIMode = systemUIModeHolder,
+            _notifications = notificationsHolder,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
             _app = this,
             _windowInsetsHolder = windowInsetsHolder,
             _displayShapeHolder = displayShapeHolder,
+            _notifications = notificationsHolder,
         )
 
         val bridgeServer = BridgeServer(
             this,
             installedAppsHolder,
             _iconPacks = installedIconPacksHolder,
+            _notifications = notificationsHolder,
         )
 
         val consoleMessagesHolder = DevConsoleMessagesHolder()
@@ -117,6 +122,7 @@ class BridgeLauncherApplication : Application()
             windowInsetsHolder = windowInsetsHolder,
             lifecycleEventsHolder = lifecycleEventsHolder,
             displayShapeHolder = displayShapeHolder,
+            notificationsHolder = notificationsHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,

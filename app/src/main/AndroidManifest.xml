@@ -117,6 +117,18 @@
 
         </service>
 
+        <service
+            android:name=".services.system.BridgeNotificationListenerService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+
+        </service>
+
         <receiver
             android:name=".services.system.BridgeLauncherDeviceAdminReceiver"
             android:description="@string/device_admin_prompt_desc"

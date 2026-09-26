@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.os.Environment
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import com.tored.bridgelauncher.BridgeLauncherApplication
 
 val Context.bridgeLauncherApplication get() = applicationContext as BridgeLauncherApplication
@@ -26,6 +27,8 @@ fun Context.getIsSystemInNightMode(): Boolean
 
 fun Context.checkCanSetSystemNightMode() = ActivityCompat.checkSelfPermission(this, "android.permission.MODIFY_DAY_NIGHT_MODE") == PackageManager.PERMISSION_GRANTED
         || checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
+
+fun Context.checkCanReadNotifications() = NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
 
 fun Context.checkStoragePerms(): Boolean
 {

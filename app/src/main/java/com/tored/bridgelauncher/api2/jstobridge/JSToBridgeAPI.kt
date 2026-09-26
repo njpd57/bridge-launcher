@@ -3,11 +3,14 @@ package com.tored.bridgelauncher.api2.jstobridge
 import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
+import android.app.ActivityOptions
+import android.app.Notification
 import android.app.UiModeManager
 import android.app.WallpaperManager
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -23,6 +26,7 @@ import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.NotificationIconsEndpoint
 import com.tored.bridgelauncher.api2.server.getBridgeApiEndpointURL
 import com.tored.bridgelauncher.api2.shared.BridgeButtonVisibilityStringOptions
 import com.tored.bridgelauncher.api2.shared.BridgeThemeStringOptions
@@ -32,6 +36,7 @@ import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemNightModeStringOptions
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
+import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.getIsBridgeAbleToLockTheScreen
@@ -39,10 +44,12 @@ import com.tored.bridgelauncher.services.settings2.setBridgeSetting
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
 import com.tored.bridgelauncher.services.settings2.useBridgeSettingStateFlow
 import com.tored.bridgelauncher.services.system.BridgeLauncherAccessibilityService
+import com.tored.bridgelauncher.services.system.BridgeNotificationListenerService
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsHolder
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsOptions
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsSnapshot
 import com.tored.bridgelauncher.utils.CurrentAndroidVersion
+import com.tored.bridgelauncher.utils.checkCanReadNotifications
 import com.tored.bridgelauncher.utils.getIsSystemInNightMode
 import com.tored.bridgelauncher.utils.launchApp
 import com.tored.bridgelauncher.utils.messageOrDefault
@@ -55,6 +62,7 @@ import com.tored.bridgelauncher.utils.startAndroidSettingsActivity
 import com.tored.bridgelauncher.utils.startBridgeAppDrawerActivity
 import com.tored.bridgelauncher.utils.startBridgeSettingsActivity
 import com.tored.bridgelauncher.utils.startDevConsoleActivity
+import com.tored.bridgelauncher.utils.startNotificationAccessSettingsActivity
 import com.tored.bridgelauncher.utils.startWallpaperPickerActivity
 import com.tored.bridgelauncher.utils.toPx
 import kotlinx.coroutines.CoroutineScope
@@ -68,6 +76,7 @@ class JSToBridgeAPI(
     private val _app: BridgeLauncherApplication,
     private val _windowInsetsHolder: WindowInsetsHolder,
     private val _displayShapeHolder: DisplayShapeHolder,
+    private val _notifications: NotificationsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -198,6 +207,79 @@ class JSToBridgeAPI(
     {
         return tryRunInHomescreenContext(showToastIfFailed) { openUrl(url) }
     }
+
+    // endregion
+
+
+    // region notifications
+
+    @JavascriptInterface
+    fun getCanReadNotifications(): Boolean = _app.checkCanReadNotifications()
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenNotificationAccessSettings(showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) { startNotificationAccessSettingsActivity() }
+    }
+
+    @JavascriptInterface
+    fun getNotificationsURL() = getBridgeApiEndpointURL(BridgeServer.ENDPOINT_NOTIFICATIONS)
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun getNotificationIconURL(key: String, large: Boolean = false) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_NOTIFICATION_ICONS,
+            // notification keys can contain any character
+            NotificationIconsEndpoint.QUERY_KEY to Uri.encode(key),
+            NotificationIconsEndpoint.QUERY_LARGE to large,
+        )
+
+    /** Does what tapping the notification in the shade does: sends its content intent, then dismisses it if it's auto-cancel. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenNotification(key: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            val notification = getActiveNotificationOrThrow(key).notification
+            val contentIntent = notification.contentIntent
+                ?: throw Exception("Notification ${q(key)} can't be opened (it has no content intent).")
+
+            // Android 14 blocks activity starts from PendingIntents sent by apps that don't opt in
+            val options = if (CurrentAndroidVersion.supportsPendingIntentBackgroundActivityStartMode())
+                ActivityOptions.makeBasic()
+                    .setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                    .toBundle()
+            else
+                null
+
+            contentIntent.send(this, 0, null, null, null, null, options)
+
+            if (notification.flags and Notification.FLAG_AUTO_CANCEL != 0)
+                BridgeNotificationListenerService.instance?.cancelNotification(key)
+        }
+    }
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestDismissNotification(key: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            val sbn = getActiveNotificationOrThrow(key)
+            if (!sbn.isClearable)
+                throw Exception("Notification ${q(key)} can't be dismissed.")
+
+            val listener = BridgeNotificationListenerService.instance
+                ?: throw Exception("Bridge is not connected to the notification service.")
+            listener.cancelNotification(key)
+        }
+    }
+
+    private fun getActiveNotificationOrThrow(key: String) = _notifications[key]
+        ?: throw Exception("No active notification with key ${q(key)}.")
 
     // endregion
 
