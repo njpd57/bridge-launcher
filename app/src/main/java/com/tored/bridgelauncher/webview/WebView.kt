@@ -232,6 +232,12 @@ fun WebView(
         factory = { context ->
             Log.d(TAG, "factory call")
             (factory?.invoke(context) ?: WebView(context)).apply {
+                // set the clients first: onCreated() starts loading the project, and requests to
+                // https://bridge.launcher/ are only served if BridgeWebViewClient is already in place
+                // (otherwise the WebView sometimes tries a real DNS lookup -> ERR_NAME_NOT_RESOLVED)
+                webChromeClient = chromeClient
+                webViewClient = client
+
                 onCreated(this)
 
                 this.layoutParams = layoutParams
@@ -239,9 +245,6 @@ fun WebView(
                 state.viewState?.let {
                     this.restoreState(it)
                 }
-
-                webChromeClient = chromeClient
-                webViewClient = client
 
             }.also { state.webView = it }
         },
