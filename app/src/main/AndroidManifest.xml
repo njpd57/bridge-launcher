@@ -52,6 +52,9 @@
         android:name="android.hardware.telephony"
         android:required="false" />
 
+    <!-- opening the clock app's alarm list (AlarmClock.ACTION_SHOW_ALARMS; normal permission) -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
     <!-- calendar events for the project (asked with Android's dialog) -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 

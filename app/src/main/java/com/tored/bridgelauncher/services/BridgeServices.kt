@@ -6,6 +6,7 @@ import com.tored.bridgelauncher.api2.bridgetojs.BridgeToJSAPI
 import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
+import com.tored.bridgelauncher.services.alarm.AlarmHolder
 import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
@@ -48,6 +49,7 @@ data class BridgeServices(
     val usageStatsHolder: UsageStatsHolder,
     val contactsHolder: ContactsHolder,
     val batteryHolder: BatteryHolder,
+    val alarmHolder: AlarmHolder,
 
 // apps & icon packs
     val installedAppsHolder: InstalledAppsHolder,

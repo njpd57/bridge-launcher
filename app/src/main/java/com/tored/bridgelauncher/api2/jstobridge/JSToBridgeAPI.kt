@@ -52,6 +52,8 @@ import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemNightModeStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemPanelStringOptions
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
+import com.tored.bridgelauncher.services.alarm.AlarmHolder
+import com.tored.bridgelauncher.services.alarm.SerializableNextAlarm
 import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.battery.SerializableBattery
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
@@ -67,6 +69,7 @@ import android.content.ContentUris
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.provider.AlarmClock
 import android.provider.CalendarContract
 import com.tored.bridgelauncher.services.quicksettings.ScreenBrightness
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
@@ -112,6 +115,7 @@ private const val TAG = "JSToBridge"
 class JSToBridgeAPI(
     private val _app: BridgeLauncherApplication,
     private val _battery: BatteryHolder,
+    private val _alarm: AlarmHolder,
     private val _windowInsetsHolder: WindowInsetsHolder,
     private val _displayShapeHolder: DisplayShapeHolder,
     private val _notifications: NotificationsHolder,
@@ -390,6 +394,25 @@ class JSToBridgeAPI(
     /** JSON `{ level, isCharging, pluggedType }`, level 0 to 100, `pluggedType` `'ac' | 'usb' | 'wireless' | 'other'` or null. Fires `batteryChanged`. */
     @JavascriptInterface
     fun getBattery(): String = Json.encodeToString(SerializableBattery.serializer(), _battery.battery.value)
+
+    // endregion
+
+
+    // region alarms
+
+    /** JSON `{ triggerTime, packageName }` (epoch ms) of the next alarm clock set on the device, or `null`. Fires `nextAlarmChanged`. */
+    @JavascriptInterface
+    fun getNextAlarm(): String = Json.encodeToString(SerializableNextAlarm.serializer().nullable, _alarm.nextAlarm.value)
+
+    /** Opens the list of alarms in whatever clock app handles `AlarmClock.ACTION_SHOW_ALARMS`. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenAlarms(showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) {
+            startActivity(Intent(AlarmClock.ACTION_SHOW_ALARMS))
+        }
+    }
 
     // endregion
 

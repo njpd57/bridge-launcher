@@ -10,6 +10,7 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.AfterResumeEven
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.BeforePauseEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.NewIntentEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.calendar.CalendarChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.alarm.NextAlarmChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.battery.BatteryChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.connectivity.ConnectivityChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadCalendarChangedEvent
@@ -53,6 +54,7 @@ import com.tored.bridgelauncher.services.apps.InstalledAppListChangeEvent
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
+import com.tored.bridgelauncher.services.alarm.AlarmHolder
 import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
@@ -88,6 +90,7 @@ class BridgeToJSAPI(
     private val _calendar: CalendarHolder,
     private val _contacts: ContactsHolder,
     private val _battery: BatteryHolder,
+    private val _alarm: AlarmHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -211,6 +214,11 @@ class BridgeToJSAPI(
         with(_battery)
         {
             onCollect(battery) { BatteryChangedEvent(it) }
+        }
+
+        with(_alarm)
+        {
+            onCollect(nextAlarm) { NextAlarmChangedEvent(it) }
         }
 
         with(_media)
