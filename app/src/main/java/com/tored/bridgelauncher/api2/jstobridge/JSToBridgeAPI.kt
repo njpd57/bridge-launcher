@@ -35,8 +35,11 @@ import com.tored.bridgelauncher.api2.shared.OverscrollEffectsStringOptions
 import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemNightModeStringOptions
+import com.tored.bridgelauncher.api2.shared.SystemPanelStringOptions
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
+import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
+import com.tored.bridgelauncher.services.quicksettings.ScreenBrightness
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.getIsBridgeAbleToLockTheScreen
@@ -50,6 +53,7 @@ import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsOptions
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsSnapshot
 import com.tored.bridgelauncher.utils.CurrentAndroidVersion
 import com.tored.bridgelauncher.utils.checkCanReadNotifications
+import com.tored.bridgelauncher.utils.checkCanWriteSystemSettings
 import com.tored.bridgelauncher.utils.getIsSystemInNightMode
 import com.tored.bridgelauncher.utils.launchApp
 import com.tored.bridgelauncher.utils.messageOrDefault
@@ -63,6 +67,7 @@ import com.tored.bridgelauncher.utils.startBridgeAppDrawerActivity
 import com.tored.bridgelauncher.utils.startBridgeSettingsActivity
 import com.tored.bridgelauncher.utils.startDevConsoleActivity
 import com.tored.bridgelauncher.utils.startNotificationAccessSettingsActivity
+import com.tored.bridgelauncher.utils.startWriteSystemSettingsPermissionActivity
 import com.tored.bridgelauncher.utils.startWallpaperPickerActivity
 import com.tored.bridgelauncher.utils.toPx
 import kotlinx.coroutines.CoroutineScope
@@ -77,6 +82,7 @@ class JSToBridgeAPI(
     private val _windowInsetsHolder: WindowInsetsHolder,
     private val _displayShapeHolder: DisplayShapeHolder,
     private val _notifications: NotificationsHolder,
+    private val _quickSettings: QuickSettingsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -280,6 +286,102 @@ class JSToBridgeAPI(
 
     private fun getActiveNotificationOrThrow(key: String) = _notifications[key]
         ?: throw Exception("No active notification with key ${q(key)}.")
+
+    // endregion
+
+
+    // region quick settings
+
+    /** Opens the floating panel (Android 10+) or settings screen for things projects can't toggle: Wi-Fi, Bluetooth... */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenSystemPanel(panel: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) {
+            startActivity(SystemPanelStringOptions.fromStringOrThrow(panel).createIntent())
+        }
+    }
+
+    @JavascriptInterface
+    fun getIsFlashlightAvailable() = _quickSettings.flashlightCameraId != null
+
+    @JavascriptInterface
+    fun getFlashlightOn() = _quickSettings.isFlashlightOn.value
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetFlashlightOn(on: Boolean, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed) { _quickSettings.setFlashlightOn(on) }
+    }
+
+    /** Whether the user let Bridge "modify system settings", needed for brightness and auto-rotate. */
+    @JavascriptInterface
+    fun getCanWriteSystemSettings() = _app.checkCanWriteSystemSettings()
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenWriteSystemSettingsPermission(showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) { startWriteSystemSettingsPermissionActivity() }
+    }
+
+    /** JSON `{ isAuto: boolean, level: number }`, with level from 0 to 1. */
+    @JavascriptInterface
+    fun getScreenBrightness() = Json.encodeToString(ScreenBrightness.serializer(), _quickSettings.screenBrightness.value)
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetScreenBrightnessAuto(auto: Boolean, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            assertCanWriteSystemSettings()
+            _quickSettings.setScreenBrightnessAuto(auto)
+        }
+    }
+
+    /** Switches to manual brightness at [level] (0 to 1). */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetScreenBrightnessLevel(level: Float, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            assertCanWriteSystemSettings()
+            _quickSettings.setScreenBrightnessLevel(level)
+        }
+    }
+
+    @JavascriptInterface
+    fun getAutoRotateOn() = _quickSettings.isAutoRotateOn.value
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetAutoRotateOn(on: Boolean, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            assertCanWriteSystemSettings()
+            _quickSettings.setAutoRotateOn(on)
+        }
+    }
+
+    @JavascriptInterface
+    fun getMasterSyncOn() = _quickSettings.isMasterSyncOn.value
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSetMasterSyncOn(on: Boolean, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed) { _quickSettings.setMasterSyncOn(on) }
+    }
+
+    private fun assertCanWriteSystemSettings()
+    {
+        if (!_app.checkCanWriteSystemSettings())
+            throw Exception("Bridge needs the \"Modify system settings\" permission for this. Open it with requestOpenWriteSystemSettingsPermission().")
+    }
 
     // endregion
 

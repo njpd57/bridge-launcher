@@ -19,6 +19,7 @@ import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
 import com.tored.bridgelauncher.services.mockexport.MockExporter
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
+import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.system.BridgeButtonQSTileService
 import com.tored.bridgelauncher.services.system.BridgeLauncherBroadcastReceiver
 import com.tored.bridgelauncher.services.system.BridgeLauncherDeviceAdminReceiver
@@ -72,6 +73,7 @@ class BridgeLauncherApplication : Application()
         val windowInsetsHolder = WindowInsetsHolder()
         val displayShapeHolder = DisplayShapeHolder()
         val notificationsHolder = NotificationsHolder()
+        val quickSettingsHolder = QuickSettingsHolder(this)
         val systemUIModeHolder = SystemUIModeHolder(
             _uiModeManager = uiModeManager
         )
@@ -84,6 +86,7 @@ class BridgeLauncherApplication : Application()
             _apps = installedAppsHolder,
             _systemUIMode = systemUIModeHolder,
             _notifications = notificationsHolder,
+            _quickSettings = quickSettingsHolder,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
@@ -91,6 +94,7 @@ class BridgeLauncherApplication : Application()
             _windowInsetsHolder = windowInsetsHolder,
             _displayShapeHolder = displayShapeHolder,
             _notifications = notificationsHolder,
+            _quickSettings = quickSettingsHolder,
         )
 
         val bridgeServer = BridgeServer(
@@ -123,6 +127,7 @@ class BridgeLauncherApplication : Application()
             lifecycleEventsHolder = lifecycleEventsHolder,
             displayShapeHolder = displayShapeHolder,
             notificationsHolder = notificationsHolder,
+            quickSettingsHolder = quickSettingsHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,
@@ -152,6 +157,7 @@ class BridgeLauncherApplication : Application()
         services.installedIconPacksHolder.startup()
         services.iconCache.startup()
         services.installedAppsHolder.startup()
+        services.quickSettingsHolder.startup()
         services.bridgeToJSInterface.startup()
     }
 }

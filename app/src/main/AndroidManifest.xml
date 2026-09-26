@@ -29,6 +29,13 @@
         android:name="android.permission.MODIFY_DAY_NIGHT_MODE"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- quick settings: brightness and auto-rotate (granted by the user in Android's settings), master sync -->
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
     <application
         android:name=".BridgeLauncherApplication"
         android:allowBackup="true"

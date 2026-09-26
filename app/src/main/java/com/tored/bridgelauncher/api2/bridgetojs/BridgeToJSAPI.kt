@@ -13,6 +13,11 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.Notificatio
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationRemovedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanLockScreenChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadNotificationsChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanWriteSystemSettingsChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.AutoRotateChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.FlashlightChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.MasterSyncChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.quicksettings.ScreenBrightnessChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanRequestSystemNightModeChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.BridgeButtonVisibilityChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.settings.BridgeThemeChangedEvent
@@ -35,6 +40,7 @@ import com.tored.bridgelauncher.services.notifications.NotificationListChangeEve
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.notifications.toSerializable
 import com.tored.bridgelauncher.services.perms.PermsHolder
+import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
@@ -56,6 +62,7 @@ class BridgeToJSAPI(
     private val _systemUIMode: SystemUIModeHolder,
     private val _lifecycleEventsHolder: LifecycleEventsHolder,
     private val _notifications: NotificationsHolder,
+    private val _quickSettings: QuickSettingsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -124,6 +131,7 @@ class BridgeToJSAPI(
             onCollect(canSetSystemNightModeState) { CanRequestSystemNightModeChangedEvent(it) }
             onCollect(canProjectsLockScreen) { CanLockScreenChangedEvent(it) }
             onCollect(canReadNotificationsState) { CanReadNotificationsChangedEvent(it) }
+            onCollect(canWriteSystemSettingsState) { CanWriteSystemSettingsChangedEvent(it) }
         }
 
         with(_systemUIMode)
@@ -140,6 +148,14 @@ class BridgeToJSAPI(
                     }
                 }
             }
+        }
+
+        with(_quickSettings)
+        {
+            onCollect(isFlashlightOn) { FlashlightChangedEvent(it) }
+            onCollect(screenBrightness) { ScreenBrightnessChangedEvent(it) }
+            onCollect(isAutoRotateOn) { AutoRotateChangedEvent(it) }
+            onCollect(isMasterSyncOn) { MasterSyncChangedEvent(it) }
         }
 
         with(_notifications)

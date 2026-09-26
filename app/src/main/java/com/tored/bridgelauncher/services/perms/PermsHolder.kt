@@ -8,6 +8,7 @@ import com.tored.bridgelauncher.services.settings2.useBridgeSettingStateFlow
 import com.tored.bridgelauncher.utils.CurrentAndroidVersion
 import com.tored.bridgelauncher.utils.checkCanReadNotifications
 import com.tored.bridgelauncher.utils.checkCanSetSystemNightMode
+import com.tored.bridgelauncher.utils.checkCanWriteSystemSettings
 import com.tored.bridgelauncher.utils.checkStoragePerms
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,9 @@ class PermsHolder(
 
     private val _canReadNotificationsState = MutableStateFlow(_context.checkCanReadNotifications())
     val canReadNotificationsState = _canReadNotificationsState.asStateFlow()
+
+    private val _canWriteSystemSettingsState = MutableStateFlow(_context.checkCanWriteSystemSettings())
+    val canWriteSystemSettingsState = _canWriteSystemSettingsState.asStateFlow()
 
     private val _isAccessibilityServiceEnabled = useBridgeSettingStateFlow(_context.settingsDataStore, _scope, BridgeSettings.isAccessibilityServiceEnabled)
     private val _isDeviceAdminEnabled = useBridgeSettingStateFlow(_context.settingsDataStore, _scope, BridgeSettings.isDeviceAdminEnabled)
@@ -70,9 +74,11 @@ class PermsHolder(
         val hasStoragePerms = _context.checkStoragePerms()
         val canSetSystemNightMode = _context.checkCanSetSystemNightMode()
         val canReadNotifications = _context.checkCanReadNotifications()
+        val canWriteSystemSettings = _context.checkCanWriteSystemSettings()
         Log.d(TAG, "notifyPermsMightHaveChanged: hasStoragePerms = $hasStoragePerms, canSetSystemNightMode = $canSetSystemNightMode")
         _hasStoragePermsState.value = hasStoragePerms
         _canSetSystemNightModeState.value = canSetSystemNightMode
         _canReadNotificationsState.value = canReadNotifications
+        _canWriteSystemSettingsState.value = canWriteSystemSettings
     }
 }

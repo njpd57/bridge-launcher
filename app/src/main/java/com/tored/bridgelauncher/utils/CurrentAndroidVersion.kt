@@ -19,6 +19,7 @@ class CurrentAndroidVersion
         fun supportsDisplayCutout() = from(Build.VERSION_CODES.S)
         fun supportsAccessiblityServiceScreenLock() = from(Build.VERSION_CODES.P)
         fun supportsPackageInfoLongVersionCode() = from(Build.VERSION_CODES.P)
+        fun supportsSettingsPanels() = from(Build.VERSION_CODES.Q)
         fun supportsNotificationListenerDetailSettings() = from(Build.VERSION_CODES.R)
         fun supportsPendingIntentBackgroundActivityStartMode() = from(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     }

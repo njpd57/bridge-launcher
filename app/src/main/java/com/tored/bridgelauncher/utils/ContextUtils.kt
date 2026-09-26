@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.provider.Settings
 import android.os.Environment
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -27,6 +28,8 @@ fun Context.getIsSystemInNightMode(): Boolean
 
 fun Context.checkCanSetSystemNightMode() = ActivityCompat.checkSelfPermission(this, "android.permission.MODIFY_DAY_NIGHT_MODE") == PackageManager.PERMISSION_GRANTED
         || checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
+
+fun Context.checkCanWriteSystemSettings() = Settings.System.canWrite(this)
 
 fun Context.checkCanReadNotifications() = NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
 

@@ -170,6 +170,12 @@ fun Context.startNotificationAccessSettingsActivity()
     startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
 }
 
+/** Where the user lets Bridge "modify system settings" (brightness, auto-rotate). */
+fun Context.startWriteSystemSettingsPermissionActivity()
+{
+    startActivity(Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:$packageName")))
+}
+
 fun Context.tryStartAndroidAccessibilitySettingsActivity() = tryOrShowErrorToast { startAndroidAccessiblitySettingsActivity() }
 fun Context.startAndroidAccessiblitySettingsActivity()
 {

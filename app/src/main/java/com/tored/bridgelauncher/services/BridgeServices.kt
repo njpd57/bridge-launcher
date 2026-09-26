@@ -15,6 +15,7 @@ import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
 import com.tored.bridgelauncher.services.mockexport.MockExporter
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
+import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.system.BridgeLauncherBroadcastReceiver
 import com.tored.bridgelauncher.services.uimode.SystemUIModeHolder
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsHolder
@@ -32,6 +33,7 @@ data class BridgeServices(
     val lifecycleEventsHolder: LifecycleEventsHolder,
     val displayShapeHolder: DisplayShapeHolder,
     val notificationsHolder: NotificationsHolder,
+    val quickSettingsHolder: QuickSettingsHolder,
 
 // apps & icon packs
     val installedAppsHolder: InstalledAppsHolder,
