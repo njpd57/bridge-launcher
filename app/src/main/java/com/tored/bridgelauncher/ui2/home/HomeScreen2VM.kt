@@ -20,10 +20,12 @@ import com.tored.bridgelauncher.api2.webview.BridgeFileChooser
 import com.tored.bridgelauncher.api2.webview.BridgeWebChromeClient
 import com.tored.bridgelauncher.api2.webview.BridgeWebViewClient
 import com.tored.bridgelauncher.services.BridgeServices
+import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.devconsole.DevConsoleMessagesHolder
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
+import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.setBridgeSetting
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
@@ -51,6 +53,8 @@ class HomeScreen2VM(
     private val _lifecycleEventsHolder: LifecycleEventsHolder,
     private val _windowInsetsHolder: WindowInsetsHolder,
     private val _displayShapeHolder: DisplayShapeHolder,
+    private val _quickSettings: QuickSettingsHolder,
+    private val _connectivity: ConnectivityHolder,
 ) : ViewModel()
 {
     // SETTINGS STATE
@@ -149,6 +153,7 @@ class HomeScreen2VM(
 
     fun beforePause()
     {
+        _connectivity.stopTrafficPolling()
         _lifecycleEventsHolder.notifyHomeScreenPaused()
     }
 
@@ -157,8 +162,14 @@ class HomeScreen2VM(
         _lifecycleEventsHolder.notifyHomeScreenReceivedNewIntent()
     }
 
+    fun afterFocusGained()
+    {
+        _quickSettings.refresh()
+    }
+
     fun afterResume()
     {
+        _connectivity.startTrafficPolling()
         _lifecycleEventsHolder.notifyHomeScreenResumed()
         _permsHolder.notifyPermsMightHaveChanged()
     }
@@ -203,6 +214,8 @@ class HomeScreen2VM(
                     _windowInsetsHolder = windowInsetsHolder,
                     _lifecycleEventsHolder = lifecycleEventsHolder,
                     _displayShapeHolder = displayShapeHolder,
+                    _quickSettings = quickSettingsHolder,
+                    _connectivity = connectivityHolder,
                     _systemUIModeHolder = systemUIModeHolder,
                 )
             }

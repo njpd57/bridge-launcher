@@ -39,6 +39,8 @@ import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemNightModeStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemPanelStringOptions
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
+import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
+import com.tored.bridgelauncher.services.connectivity.SerializableConnectivity
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.media.SerializableMediaSession
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
@@ -89,6 +91,7 @@ class JSToBridgeAPI(
     private val _notifications: NotificationsHolder,
     private val _quickSettings: QuickSettingsHolder,
     private val _media: MediaSessionsHolder,
+    private val _connectivity: ConnectivityHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -296,6 +299,15 @@ class JSToBridgeAPI(
     // endregion
 
 
+    // region connectivity
+
+    /** JSON `{ type, wifiLevel, cellularLevel, cellularDataActivity, dataActivity }`, levels 0 to 4. Fires `connectivityChanged`. */
+    @JavascriptInterface
+    fun getConnectivity(): String = Json.encodeToString(SerializableConnectivity.serializer(), _connectivity.connectivity.value)
+
+    // endregion
+
+
     // region media
 
     /** The current media session as JSON, or `null` (needs notification access). Fires `mediaSessionChanged`. */
@@ -360,6 +372,21 @@ class JSToBridgeAPI(
             startActivity(SystemPanelStringOptions.fromStringOrThrow(panel).createIntent())
         }
     }
+
+    /** Whether Wi-Fi is on (not necessarily connected). Fires `wifiEnabledChanged`. */
+    @JavascriptInterface
+    fun getWifiEnabled() = _quickSettings.isWifiOn.value
+
+    @JavascriptInterface
+    fun getIsBluetoothAvailable() = _quickSettings.isBluetoothAvailable
+
+    /** Fires `bluetoothEnabledChanged` (from Android 12, once the home screen gets the focus back). */
+    @JavascriptInterface
+    fun getBluetoothEnabled() = _quickSettings.isBluetoothOn.value
+
+    /** Whether location (GPS) is on. Fires `locationEnabledChanged`. */
+    @JavascriptInterface
+    fun getLocationEnabled() = _quickSettings.isLocationOn.value
 
     @JavascriptInterface
     fun getIsFlashlightAvailable() = _quickSettings.flashlightCameraId != null

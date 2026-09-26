@@ -36,6 +36,15 @@
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
+    <!-- reading whether Wi-Fi / Bluetooth are on (normal permissions; BLUETOOTH is only needed up to Android 11) -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- the network in use and the Wi-Fi signal level (normal permission) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+
     <application
         android:name=".BridgeLauncherApplication"
         android:allowBackup="true"

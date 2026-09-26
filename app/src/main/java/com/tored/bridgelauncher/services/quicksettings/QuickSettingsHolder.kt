@@ -1,14 +1,23 @@
 package com.tored.bridgelauncher.services.quicksettings
 
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.database.ContentObserver
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.location.LocationManager
+import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
@@ -27,7 +36,7 @@ data class ScreenBrightness(
 /**
  * System toggles that an app can still change itself: flashlight, screen brightness, auto-rotate
  * and master sync. Wi-Fi, Bluetooth, mobile data and location can't be toggled by apps on current
- * Android versions; for those, projects can only open the system panels.
+ * Android versions; for those, projects can only read whether they're on and open the system panels.
  */
 class QuickSettingsHolder(
     private val _context: Context,
@@ -36,6 +45,9 @@ class QuickSettingsHolder(
     private val _handler = Handler(Looper.getMainLooper())
     private val _resolver = _context.contentResolver
     private val _cameraManager = _context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    private val _wifiManager = _context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+    private val _bluetoothAdapter: BluetoothAdapter? = (_context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
+    private val _locationManager = _context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     /** A back camera with a flash unit, or null if the device has no flashlight. */
     val flashlightCameraId: String? = try
@@ -61,6 +73,16 @@ class QuickSettingsHolder(
 
     private val _isMasterSyncOn = MutableStateFlow(ContentResolver.getMasterSyncAutomatically())
     val isMasterSyncOn = _isMasterSyncOn.asStateFlow()
+
+    private val _isWifiOn = MutableStateFlow(_wifiManager.isWifiEnabled)
+    val isWifiOn = _isWifiOn.asStateFlow()
+
+    val isBluetoothAvailable = _bluetoothAdapter != null
+    private val _isBluetoothOn = MutableStateFlow(readIsBluetoothOn())
+    val isBluetoothOn = _isBluetoothOn.asStateFlow()
+
+    private val _isLocationOn = MutableStateFlow(LocationManagerCompat.isLocationEnabled(_locationManager))
+    val isLocationOn = _isLocationOn.asStateFlow()
 
 
     fun startup()
@@ -96,6 +118,25 @@ class QuickSettingsHolder(
         ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_SETTINGS) {
             _isMasterSyncOn.value = ContentResolver.getMasterSyncAutomatically()
         }
+
+        // Wi-Fi and location changes are broadcast to everyone. Bluetooth's broadcast needs the runtime
+        // permission BLUETOOTH_CONNECT from Android 12, so it's re-read in refresh() instead (see there).
+        registerReceiver(WifiManager.WIFI_STATE_CHANGED_ACTION) { _isWifiOn.value = _wifiManager.isWifiEnabled }
+        registerReceiver(LocationManager.MODE_CHANGED_ACTION, LocationManager.PROVIDERS_CHANGED_ACTION) {
+            _isLocationOn.value = LocationManagerCompat.isLocationEnabled(_locationManager)
+        }
+        registerReceiver(BluetoothAdapter.ACTION_STATE_CHANGED) { _isBluetoothOn.value = readIsBluetoothOn() }
+    }
+
+    /**
+     * Reads the states that can change without Bridge hearing about it (Bluetooth from Android 12).
+     * Called when the home screen gets the focus back, e.g. after closing the notification shade.
+     */
+    fun refresh()
+    {
+        _isWifiOn.value = _wifiManager.isWifiEnabled
+        _isBluetoothOn.value = readIsBluetoothOn()
+        _isLocationOn.value = LocationManagerCompat.isLocationEnabled(_locationManager)
     }
 
 
@@ -145,6 +186,30 @@ class QuickSettingsHolder(
         isAuto = Settings.System.getInt(_resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
         level = Settings.System.getInt(_resolver, Settings.System.SCREEN_BRIGHTNESS, MAX_SCREEN_BRIGHTNESS).toFloat() / MAX_SCREEN_BRIGHTNESS,
     )
+
+    // isEnabled() needs no permission from Android 12, and the legacy BLUETOOTH permission before
+    private fun readIsBluetoothOn() = try
+    {
+        _bluetoothAdapter?.isEnabled == true
+    }
+    catch (ex: SecurityException)
+    {
+        false
+    }
+
+    private fun registerReceiver(vararg actions: String, onReceive: () -> Unit)
+    {
+        val filter = IntentFilter().apply { actions.forEach { addAction(it) } }
+        ContextCompat.registerReceiver(
+            _context,
+            object : BroadcastReceiver()
+            {
+                override fun onReceive(context: Context?, intent: Intent?) = onReceive()
+            },
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+    }
 
     private fun readIsAutoRotateOn() = Settings.System.getInt(_resolver, Settings.System.ACCELEROMETER_ROTATION, 0) == 1
 

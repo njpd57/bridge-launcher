@@ -81,6 +81,14 @@ class HomeScreenActivity : ComponentActivity()
         _homeScreenVM.onConfigurationChanged()
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean)
+    {
+        super.onWindowFocusChanged(hasFocus)
+        // e.g. the notification shade was closed; it doesn't pause the activity
+        if (hasFocus)
+            _homeScreenVM.afterFocusGained()
+    }
+
     override fun onPause()
     {
         _homeScreenVM.beforePause()

@@ -6,6 +6,7 @@ import com.tored.bridgelauncher.api2.bridgetojs.BridgeToJSAPI
 import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
+import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.devconsole.DevConsoleMessagesHolder
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
 import com.tored.bridgelauncher.services.iconcache.IconCache
@@ -36,6 +37,7 @@ data class BridgeServices(
     val notificationsHolder: NotificationsHolder,
     val quickSettingsHolder: QuickSettingsHolder,
     val mediaSessionsHolder: MediaSessionsHolder,
+    val connectivityHolder: ConnectivityHolder,
 
 // apps & icon packs
     val installedAppsHolder: InstalledAppsHolder,

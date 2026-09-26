@@ -10,6 +10,7 @@ import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.services.BridgeServices
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
+import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.devconsole.DevConsoleMessagesHolder
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
 import com.tored.bridgelauncher.services.iconcache.IconCache
@@ -76,6 +77,7 @@ class BridgeLauncherApplication : Application()
         val notificationsHolder = NotificationsHolder()
         val quickSettingsHolder = QuickSettingsHolder(this)
         val mediaSessionsHolder = MediaSessionsHolder(this)
+        val connectivityHolder = ConnectivityHolder(this)
         val systemUIModeHolder = SystemUIModeHolder(
             _uiModeManager = uiModeManager
         )
@@ -90,6 +92,7 @@ class BridgeLauncherApplication : Application()
             _notifications = notificationsHolder,
             _quickSettings = quickSettingsHolder,
             _media = mediaSessionsHolder,
+            _connectivity = connectivityHolder,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
@@ -99,6 +102,7 @@ class BridgeLauncherApplication : Application()
             _notifications = notificationsHolder,
             _quickSettings = quickSettingsHolder,
             _media = mediaSessionsHolder,
+            _connectivity = connectivityHolder,
         )
 
         val bridgeServer = BridgeServer(
@@ -134,6 +138,7 @@ class BridgeLauncherApplication : Application()
             notificationsHolder = notificationsHolder,
             quickSettingsHolder = quickSettingsHolder,
             mediaSessionsHolder = mediaSessionsHolder,
+            connectivityHolder = connectivityHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,
@@ -164,6 +169,7 @@ class BridgeLauncherApplication : Application()
         services.iconCache.startup()
         services.installedAppsHolder.startup()
         services.quickSettingsHolder.startup()
+        services.connectivityHolder.startup()
         services.bridgeToJSInterface.startup()
     }
 }
