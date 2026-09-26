@@ -46,6 +46,14 @@ class PermsHolder(
     private val _canReadUsageStatsState = MutableStateFlow(false)
     val canReadUsageStatsState = _canReadUsageStatsState.asStateFlow()
 
+    private fun isGranted(permission: String) = ContextCompat.checkSelfPermission(_context, permission) == PackageManager.PERMISSION_GRANTED
+
+    private val _canReadContactsState = MutableStateFlow(isGranted(Manifest.permission.READ_CONTACTS))
+    val canReadContactsState = _canReadContactsState.asStateFlow()
+
+    private val _canCallPhoneState = MutableStateFlow(isGranted(Manifest.permission.CALL_PHONE))
+    val canCallPhoneState = _canCallPhoneState.asStateFlow()
+
     private fun checkCanReadCalendar() = ContextCompat.checkSelfPermission(_context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
     private val _canReadCalendarState = MutableStateFlow(checkCanReadCalendar())
     val canReadCalendarState = _canReadCalendarState.asStateFlow()
@@ -94,5 +102,7 @@ class PermsHolder(
         _canWriteSystemSettingsState.value = canWriteSystemSettings
         _canReadCalendarState.value = checkCanReadCalendar()
         _canReadUsageStatsState.value = checkCanReadUsageStats()
+        _canReadContactsState.value = isGranted(Manifest.permission.READ_CONTACTS)
+        _canCallPhoneState.value = isGranted(Manifest.permission.CALL_PHONE)
     }
 }

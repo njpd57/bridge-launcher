@@ -13,6 +13,10 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.calendar.CalendarChangedE
 import com.tored.bridgelauncher.api2.bridgetojs.events.connectivity.ConnectivityChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadCalendarChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadUsageStatsChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadContactsChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanCallPhoneChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.contacts.ContactsChangedEvent
+import com.tored.bridgelauncher.services.contacts.ContactsHolder
 import com.tored.bridgelauncher.api2.bridgetojs.events.media.MediaSessionChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationPostedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationRemovedEvent
@@ -77,6 +81,7 @@ class BridgeToJSAPI(
     private val _media: MediaSessionsHolder,
     private val _connectivity: ConnectivityHolder,
     private val _calendar: CalendarHolder,
+    private val _contacts: ContactsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -148,6 +153,8 @@ class BridgeToJSAPI(
             onCollect(canWriteSystemSettingsState) { CanWriteSystemSettingsChangedEvent(it) }
             onCollect(canReadCalendarState) { CanReadCalendarChangedEvent(it) }
             onCollect(canReadUsageStatsState) { CanReadUsageStatsChangedEvent(it) }
+            onCollect(canReadContactsState) { CanReadContactsChangedEvent(it) }
+            onCollect(canCallPhoneState) { CanCallPhoneChangedEvent(it) }
         }
 
         with(_systemUIMode)
@@ -175,6 +182,11 @@ class BridgeToJSAPI(
             onCollect(isWifiOn) { WifiEnabledChangedEvent(it) }
             onCollect(isBluetoothOn) { BluetoothEnabledChangedEvent(it) }
             onCollect(isLocationOn) { LocationEnabledChangedEvent(it) }
+        }
+
+        with(_contacts)
+        {
+            onCollect(changes) { ContactsChangedEvent() }
         }
 
         with(_calendar)

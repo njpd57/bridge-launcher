@@ -30,6 +30,9 @@ import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.CalendarEventsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppUsageEndpoint
 import com.tored.bridgelauncher.services.usage.UsageStatsHolder
+import com.tored.bridgelauncher.services.contacts.ContactsHolder
+import com.tored.bridgelauncher.api2.server.endpoints.ContactsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.ContactPhotosEndpoint
 import com.tored.bridgelauncher.utils.startUsageAccessSettingsActivity
 import android.app.RemoteInput
 import com.tored.bridgelauncher.api2.webview.BridgeRuntimePermissionRequester
@@ -113,6 +116,7 @@ class JSToBridgeAPI(
     private val _calendar: CalendarHolder,
     private val _perms: PermsHolder,
     private val _usage: UsageStatsHolder,
+    private val _contacts: ContactsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -556,6 +560,80 @@ class JSToBridgeAPI(
     // endregion
 
 
+    // region contacts
+
+    /** Whether Bridge may read contacts (READ_CONTACTS). Fires `canReadContactsChanged`. */
+    @JavascriptInterface
+    fun getCanReadContacts() = _contacts.canRead
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestContactsPermission(showToastIfFailed: Boolean = true): Boolean
+    {
+        if (_contacts.canRead) return true
+        return requestRuntimePermission(android.Manifest.permission.READ_CONTACTS, showToastIfFailed) { _contacts.startObservingIfPossible() }
+    }
+
+    /**
+     * JSON `{ contacts: [{ id, lookupKey, name, starred, hasPhoto, phoneNumbers: [{ number, label, isPrimary }] }] }`:
+     * contacts with a phone number, by name. `query` matches names and numbers; empty means all. 403 without permission.
+     */
+    @JvmOverloads
+    @JavascriptInterface
+    fun getContactsURL(query: String? = null, starredOnly: Boolean = false, limit: Int = 0) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_CONTACTS,
+            ContactsEndpoint.QUERY_QUERY to query?.takeIf { it.isNotBlank() }?.let { Uri.encode(it) },
+            ContactsEndpoint.QUERY_STARRED_ONLY to starredOnly,
+            ContactsEndpoint.QUERY_LIMIT to limit.takeIf { it > 0 },
+        )
+
+    /** The contact's photo; 404 when it has none (check `hasPhoto`). */
+    @JavascriptInterface
+    fun getContactPhotoURL(lookupKey: String) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_CONTACT_PHOTOS,
+            ContactPhotosEndpoint.QUERY_LOOKUP_KEY to Uri.encode(lookupKey),
+        )
+
+    /** Opens the contact's card in the contacts app. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenContact(lookupKey: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed)
+        {
+            startActivity(Intent(Intent.ACTION_VIEW, _contacts.getContactUri(lookupKey)))
+        }
+    }
+
+    /** Whether Bridge may place calls itself (CALL_PHONE). Fires `canCallPhoneChanged`. */
+    @JavascriptInterface
+    fun getCanCallPhone() = _contacts.canCall
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestCallPhonePermission(showToastIfFailed: Boolean = true): Boolean
+    {
+        if (_contacts.canCall) return true
+        return requestRuntimePermission(android.Manifest.permission.CALL_PHONE, showToastIfFailed)
+    }
+
+    /** Calls [number] right away with CALL_PHONE; without it, opens the dialer with the number typed in. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestCallPhoneNumber(number: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed)
+        {
+            val uri = Uri.fromParts("tel", number, null)
+            startActivity(Intent(if (_contacts.canCall) Intent.ACTION_CALL else Intent.ACTION_DIAL, uri))
+        }
+    }
+
+    // endregion
+
+
     // region calendar
 
     /** Whether Bridge may read the calendar (READ_CALENDAR). Fires `canReadCalendarChanged`. */
@@ -571,13 +649,22 @@ class JSToBridgeAPI(
     fun requestCalendarPermission(showToastIfFailed: Boolean = true): Boolean
     {
         if (_calendar.canRead) return true
+        return requestRuntimePermission(android.Manifest.permission.READ_CALENDAR, showToastIfFailed) { _calendar.startObservingIfPossible() }
+    }
+
+    /**
+     * Shows Android's dialog for [permission] from the home screen (or Bridge's app settings if it was refused
+     * for good). The answer reaches JS as the matching `can…Changed` event, through PermsHolder.
+     */
+    private fun requestRuntimePermission(permission: String, showToastIfFailed: Boolean, afterAnswer: () -> Unit = {}): Boolean
+    {
         return _app.tryRun(showToastIfFailed)
         {
             val requester = permissionRequester ?: throw Exception("The home screen isn't ready to ask for permissions.")
             Handler(Looper.getMainLooper()).post {
-                requester.request(android.Manifest.permission.READ_CALENDAR) {
+                requester.request(permission) {
                     _perms.notifyPermsMightHaveChanged()
-                    _calendar.startObservingIfPossible()
+                    afterAnswer()
                 }
             }
         }

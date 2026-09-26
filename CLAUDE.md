@@ -4,7 +4,7 @@ Fork of [Bridge Launcher](https://github.com/bridgelauncher/launcher) (upstream 
 
 The goal of this fork is to **add new API capabilities** needed by our web launcher, [njpd57/gingerbread-bridge-launcher](https://github.com/njpd57/gingerbread-bridge-launcher) (branch `dev`, Vue 3 + TS). The roadmap, with a proposed API and implementation notes for each feature, is on Confluence: **"Mejoras propuestas a Bridge (fork)"**, https://quickware.atlassian.net/wiki/spaces/~712020439862fa4a724279bd9c184cf15d81ab/pages/5373953 (in Spanish). Read it before starting a feature and follow its recommended order.
 
-## Fork status (2026-09-25)
+## Fork status (2026-09-26)
 
 Everything below is on `main`, tested on the Flip5 and used by the web launcher (see its `FEATURES.md`). The Confluence page still describes most of it as a proposal.
 
@@ -20,8 +20,9 @@ Everything below is on `main`, tested on the Flip5 and used by the web launcher 
 - App shortcuts: `getCanAccessAppShortcuts`, `getAppShortcutsURL`, `getAppShortcutIconURL`, `requestStartAppShortcut`.
 - App usage (special "Usage access"): `getCanReadUsageStats`, `requestOpenUsageAccessSettings`, `getAppUsageURL(from, to)` (time in foreground, opens and last use per app, computed from activity events), event `canReadUsageStatsChanged`.
 - Calendar (READ_CALENDAR, asked with Android's dialog): `getCanReadCalendar`, `requestCalendarPermission`, `getCalendarEventsURL`, `requestOpenCalendarEvent`, `requestOpenCalendarAt`; events `canReadCalendarChanged`, `calendarChanged`.
+- Contacts (READ_CONTACTS, asked with Android's dialog): `getCanReadContacts`, `requestContactsPermission`, `getContactsURL(query, starredOnly, limit)` (contacts with a phone number, matched by name/number, primary number first), `getContactPhotoURL`, `requestOpenContact`; events `canReadContactsChanged`, `contactsChanged`. Calling (CALL_PHONE, a separate permission): `getCanCallPhone`, `requestCallPhonePermission`, `requestCallPhoneNumber` (calls directly with the permission, otherwise opens the dialer), event `canCallPhoneChanged`. Used by the launcher's idea 37 (contacts in search).
 
-**Fixed:** intermittent `ERR_NAME_NOT_RESOLVED` (the WebView clients were set after the first `loadUrl`); "homeScreenContext is null" after opening another app.
+**Fixed:** intermittent `ERR_NAME_NOT_RESOLVED` (the WebView clients were set after the first `loadUrl`); "homeScreenContext is null" after opening another app; `URLWithQueryBuilder.addParams` (the batch overload `getBridgeApiEndpointURL` uses) added every pair regardless of value, so a `null` param (e.g. an empty `getContactsURL` query) rendered as the literal text `null` in the URL instead of being omitted — the endpoint then filtered contacts by the string "null" and returned none. `addParams` now defers to `addParam`, which already skipped nulls.
 
 **Known Bridge bugs, not fixed yet** (found by the launcher, also in upstream):
 - `WindowInsetsSnapshot.getSnapshot()` passes `(left, top, right, bottom)` positionally to a constructor declared `(top, left, right, bottom)`, so **top and left are swapped in every inset** (getters and events). On the Flip5 in portrait the status bar arrives as `left: 33, top: 0`. The fix is to pass them by name; launchers would need a way to tell fixed builds apart (e.g. a new method).

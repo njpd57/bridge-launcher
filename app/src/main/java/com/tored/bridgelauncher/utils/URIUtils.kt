@@ -15,13 +15,15 @@ class URLWithQueryBuilder(
 
     fun addParams(params: Iterable<Pair<String, Any?>>): URLWithQueryBuilder
     {
-        this.params.addAll(params)
+        for ((name, value) in params)
+            addParam(name, value)
         return this
     }
 
     fun addParams(params: Array<Pair<String, Any?>>): URLWithQueryBuilder
     {
-        this.params.addAll(params)
+        for ((name, value) in params)
+            addParam(name, value)
         return this
     }
 

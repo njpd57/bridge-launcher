@@ -58,6 +58,7 @@ class HomeScreen2VM(
     private val _quickSettings: QuickSettingsHolder,
     private val _connectivity: ConnectivityHolder,
     private val _calendar: CalendarHolder,
+    private val _contacts: com.tored.bridgelauncher.services.contacts.ContactsHolder,
 ) : ViewModel()
 {
     // SETTINGS STATE
@@ -178,6 +179,7 @@ class HomeScreen2VM(
         _permsHolder.notifyPermsMightHaveChanged()
         // the calendar permission may have been granted in Android's settings
         _calendar.startObservingIfPossible()
+        _contacts.startObservingIfPossible()
     }
 
     fun onConfigurationChanged()
@@ -226,6 +228,7 @@ class HomeScreen2VM(
                     _quickSettings = quickSettingsHolder,
                     _connectivity = connectivityHolder,
                     _calendar = calendarHolder,
+                    _contacts = contactsHolder,
                     _systemUIModeHolder = systemUIModeHolder,
                 )
             }
