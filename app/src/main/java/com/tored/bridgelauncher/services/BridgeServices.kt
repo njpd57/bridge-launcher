@@ -20,6 +20,7 @@ import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
+import com.tored.bridgelauncher.services.usage.UsageStatsHolder
 import com.tored.bridgelauncher.services.system.BridgeLauncherBroadcastReceiver
 import com.tored.bridgelauncher.services.uimode.SystemUIModeHolder
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsHolder
@@ -42,6 +43,7 @@ data class BridgeServices(
     val connectivityHolder: ConnectivityHolder,
     val appShortcutsHolder: AppShortcutsHolder,
     val calendarHolder: CalendarHolder,
+    val usageStatsHolder: UsageStatsHolder,
 
 // apps & icon packs
     val installedAppsHolder: InstalledAppsHolder,

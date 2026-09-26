@@ -28,6 +28,10 @@ import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.CalendarEventsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.AppUsageEndpoint
+import com.tored.bridgelauncher.services.usage.UsageStatsHolder
+import com.tored.bridgelauncher.utils.startUsageAccessSettingsActivity
+import android.app.RemoteInput
 import com.tored.bridgelauncher.api2.webview.BridgeRuntimePermissionRequester
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
@@ -108,6 +112,7 @@ class JSToBridgeAPI(
     private val _shortcuts: AppShortcutsHolder,
     private val _calendar: CalendarHolder,
     private val _perms: PermsHolder,
+    private val _usage: UsageStatsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -310,6 +315,43 @@ class JSToBridgeAPI(
     else
         null
 
+    /** Presses one of the notification's buttons (see `actions` in the notification JSON). */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestNotificationAction(key: String, actionIndex: Int, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            getNotificationActionOrThrow(key, actionIndex).actionIntent.send(this, 0, null, null, null, null, pendingIntentSendOptions())
+        }
+    }
+
+    /** Sends [text] through a notification action that takes typed text (a "Reply" button). */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestReplyToNotification(key: String, actionIndex: Int, text: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            val action = getNotificationActionOrThrow(key, actionIndex)
+            val remoteInputs = action.remoteInputs?.filter { it.allowFreeFormInput }
+            if (remoteInputs.isNullOrEmpty())
+                throw Exception("That action of notification ${q(key)} doesn't take text.")
+
+            val results = Bundle().apply { remoteInputs.forEach { putCharSequence(it.resultKey, text) } }
+            val fillIn = Intent()
+            RemoteInput.addResultsToIntent(remoteInputs.toTypedArray(), fillIn, results)
+            action.actionIntent.send(this, 0, fillIn, null, null, null, pendingIntentSendOptions())
+        }
+    }
+
+    private fun getNotificationActionOrThrow(key: String, actionIndex: Int): android.app.Notification.Action
+    {
+        val actions = getActiveNotificationOrThrow(key).notification.actions
+        return actions?.getOrNull(actionIndex)
+            ?: throw Exception("Notification ${q(key)} has no action $actionIndex.")
+    }
+
     private fun getActiveNotificationOrThrow(key: String) = _notifications[key]
         ?: throw Exception("No active notification with key ${q(key)}.")
 
@@ -485,6 +527,31 @@ class JSToBridgeAPI(
         if (!_app.checkCanWriteSystemSettings())
             throw Exception("Bridge needs the \"Modify system settings\" permission for this. Open it with requestOpenWriteSystemSettingsPermission().")
     }
+
+    // endregion
+
+
+    // region app usage
+
+    /** Whether the user gave Bridge "Usage access". Fires `canReadUsageStatsChanged` (checked when the home screen resumes). */
+    @JavascriptInterface
+    fun getCanReadUsageStats() = _usage.canRead
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenUsageAccessSettings(showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) { startUsageAccessSettingsActivity() }
+    }
+
+    /** JSON `{ apps: [{ packageName, totalTimeMs, openCount, lastTimeUsed }] }` for [from, to) (ms), most used first. 403 without access. */
+    @JavascriptInterface
+    fun getAppUsageURL(from: Long, to: Long) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_APP_USAGE,
+            AppUsageEndpoint.QUERY_FROM to from,
+            AppUsageEndpoint.QUERY_TO to to,
+        )
 
     // endregion
 

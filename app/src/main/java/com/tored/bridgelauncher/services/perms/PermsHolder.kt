@@ -41,6 +41,11 @@ class PermsHolder(
     private val _canWriteSystemSettingsState = MutableStateFlow(_context.checkCanWriteSystemSettings())
     val canWriteSystemSettingsState = _canWriteSystemSettingsState.asStateFlow()
 
+    // usage access is an app op, read through the holder that uses it
+    var checkCanReadUsageStats: () -> Boolean = { false }
+    private val _canReadUsageStatsState = MutableStateFlow(false)
+    val canReadUsageStatsState = _canReadUsageStatsState.asStateFlow()
+
     private fun checkCanReadCalendar() = ContextCompat.checkSelfPermission(_context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
     private val _canReadCalendarState = MutableStateFlow(checkCanReadCalendar())
     val canReadCalendarState = _canReadCalendarState.asStateFlow()
@@ -88,5 +93,6 @@ class PermsHolder(
         _canReadNotificationsState.value = canReadNotifications
         _canWriteSystemSettingsState.value = canWriteSystemSettings
         _canReadCalendarState.value = checkCanReadCalendar()
+        _canReadUsageStatsState.value = checkCanReadUsageStats()
     }
 }

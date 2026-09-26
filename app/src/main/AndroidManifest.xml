@@ -39,6 +39,11 @@
     <!-- reading whether Wi-Fi / Bluetooth are on (normal permissions; BLUETOOTH is only needed up to Android 11) -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
+    <!-- app usage (special access, granted by the user in Android's settings) -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
     <!-- calendar events for the project (asked with Android's dialog) -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 

@@ -12,6 +12,7 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.NewIntentEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.calendar.CalendarChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.connectivity.ConnectivityChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadCalendarChangedEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanReadUsageStatsChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.media.MediaSessionChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationPostedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationRemovedEvent
@@ -146,6 +147,7 @@ class BridgeToJSAPI(
             onCollect(canReadNotificationsState) { CanReadNotificationsChangedEvent(it) }
             onCollect(canWriteSystemSettingsState) { CanWriteSystemSettingsChangedEvent(it) }
             onCollect(canReadCalendarState) { CanReadCalendarChangedEvent(it) }
+            onCollect(canReadUsageStatsState) { CanReadUsageStatsChangedEvent(it) }
         }
 
         with(_systemUIMode)

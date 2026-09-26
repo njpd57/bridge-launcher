@@ -7,6 +7,7 @@ import com.tored.bridgelauncher.BridgeLauncherApplication
 import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.AppUsageEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.BridgeFileServer
 import com.tored.bridgelauncher.api2.server.endpoints.CalendarEventsEndpoint
@@ -22,6 +23,7 @@ import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
+import com.tored.bridgelauncher.services.usage.UsageStatsHolder
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
@@ -57,6 +59,7 @@ class BridgeServer(
     private val _media: MediaSessionsHolder,
     private val _shortcuts: AppShortcutsHolder,
     private val _calendar: CalendarHolder,
+    private val _usage: UsageStatsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main) + SupervisorJob()
@@ -82,6 +85,7 @@ class BridgeServer(
         ENDPOINT_APP_SHORTCUTS to AppShortcutsEndpoint(_shortcuts),
         ENDPOINT_APP_SHORTCUT_ICONS to AppShortcutIconsEndpoint(_shortcuts),
         ENDPOINT_CALENDAR_EVENTS to CalendarEventsEndpoint(_calendar),
+        ENDPOINT_APP_USAGE to AppUsageEndpoint(_usage),
     )
 
     suspend fun handle(req: WebResourceRequest): WebResourceResponse?
@@ -138,5 +142,6 @@ class BridgeServer(
         const val ENDPOINT_APP_SHORTCUTS = "appshortcuts"
         const val ENDPOINT_APP_SHORTCUT_ICONS = "appshortcuticons"
         const val ENDPOINT_CALENDAR_EVENTS = "calendarevents"
+        const val ENDPOINT_APP_USAGE = "appusage"
     }
 }

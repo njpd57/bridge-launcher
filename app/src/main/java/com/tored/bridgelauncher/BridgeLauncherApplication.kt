@@ -24,6 +24,7 @@ import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
+import com.tored.bridgelauncher.services.usage.UsageStatsHolder
 import com.tored.bridgelauncher.services.system.BridgeButtonQSTileService
 import com.tored.bridgelauncher.services.system.BridgeLauncherBroadcastReceiver
 import com.tored.bridgelauncher.services.system.BridgeLauncherDeviceAdminReceiver
@@ -82,6 +83,9 @@ class BridgeLauncherApplication : Application()
         val connectivityHolder = ConnectivityHolder(this)
         val appShortcutsHolder = AppShortcutsHolder(this)
         val calendarHolder = CalendarHolder(this)
+        val usageStatsHolder = UsageStatsHolder(this)
+        permsHolder.checkCanReadUsageStats = { usageStatsHolder.canRead }
+        permsHolder.notifyPermsMightHaveChanged()
         val systemUIModeHolder = SystemUIModeHolder(
             _uiModeManager = uiModeManager
         )
@@ -111,6 +115,7 @@ class BridgeLauncherApplication : Application()
             _shortcuts = appShortcutsHolder,
             _calendar = calendarHolder,
             _perms = permsHolder,
+            _usage = usageStatsHolder,
         )
 
         val bridgeServer = BridgeServer(
@@ -121,6 +126,7 @@ class BridgeLauncherApplication : Application()
             _media = mediaSessionsHolder,
             _shortcuts = appShortcutsHolder,
             _calendar = calendarHolder,
+            _usage = usageStatsHolder,
         )
 
         val consoleMessagesHolder = DevConsoleMessagesHolder()
@@ -151,6 +157,7 @@ class BridgeLauncherApplication : Application()
             connectivityHolder = connectivityHolder,
             appShortcutsHolder = appShortcutsHolder,
             calendarHolder = calendarHolder,
+            usageStatsHolder = usageStatsHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,

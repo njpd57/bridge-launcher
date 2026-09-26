@@ -170,6 +170,19 @@ fun Context.startNotificationAccessSettingsActivity()
     startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
 }
 
+/** Where the user gives Bridge usage access: its own page where supported, otherwise the whole list. */
+fun Context.startUsageAccessSettingsActivity()
+{
+    try
+    {
+        startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS, Uri.parse("package:$packageName")))
+    }
+    catch (_: ActivityNotFoundException)
+    {
+        startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+    }
+}
+
 /** Where the user lets Bridge "modify system settings" (brightness, auto-rotate). */
 fun Context.startWriteSystemSettingsPermissionActivity()
 {
