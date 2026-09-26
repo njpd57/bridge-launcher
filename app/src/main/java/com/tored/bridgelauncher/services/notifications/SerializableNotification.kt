@@ -16,6 +16,8 @@ data class SerializableNotification(
     val isOngoing: Boolean,
     val isClearable: Boolean,
     val isGroupSummary: Boolean,
+    /** A media player's notification (it carries a media session), which projects may show as a player instead. */
+    val isMedia: Boolean,
     val hasLargeIcon: Boolean,
 )
 
@@ -33,6 +35,7 @@ fun StatusBarNotification.toSerializable(): SerializableNotification
         isOngoing = isOngoing,
         isClearable = isClearable,
         isGroupSummary = notification.flags and Notification.FLAG_GROUP_SUMMARY != 0,
+        isMedia = extras.containsKey(Notification.EXTRA_MEDIA_SESSION),
         hasLargeIcon = notification.getLargeIcon() != null,
     )
 }
