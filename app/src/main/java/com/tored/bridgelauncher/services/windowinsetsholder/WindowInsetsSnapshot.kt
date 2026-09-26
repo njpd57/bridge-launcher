@@ -22,9 +22,9 @@ data class WindowInsetsSnapshot(
 fun WindowInsets.getSnapshot(density: Density): WindowInsetsSnapshot
 {
     return WindowInsetsSnapshot(
-        getLeft(density, LayoutDirection.Ltr) / density.density,
-        getTop(density) / density.density,
-        getRight(density, LayoutDirection.Ltr) / density.density,
-        getBottom(density) / density.density,
+        top = getTop(density) / density.density,
+        left = getLeft(density, LayoutDirection.Ltr) / density.density,
+        right = getRight(density, LayoutDirection.Ltr) / density.density,
+        bottom = getBottom(density) / density.density,
     )
 }

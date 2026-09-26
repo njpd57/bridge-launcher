@@ -172,6 +172,14 @@ class JSToBridgeAPI(
     @JavascriptInterface
     fun getBridgeVersionName(): String = _pm.getPackageInfo(_app.packageName, 0).versionName ?: ""
 
+    /**
+     * True on forks where window insets report `top`/`left` correctly (see CLAUDE.md's "Known Bridge
+     * bugs"). Absent on every earlier build, including stock Bridge, so `bridgeHas('getWindowInsetsSwapFixed')`
+     * alone tells a launcher whether it can trust `top`/`left` as reported.
+     */
+    @JavascriptInterface
+    fun getWindowInsetsSwapFixed() = true
+
 
     @JavascriptInterface
     fun getLastErrorMessage() = _lastException?.messageOrDefault()

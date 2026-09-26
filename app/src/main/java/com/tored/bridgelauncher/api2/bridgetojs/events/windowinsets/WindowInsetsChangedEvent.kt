@@ -10,16 +10,18 @@ import kotlinx.serialization.json.Json
 @Serializable
 class WindowInsetsChangedEvent(
     override val name: String,
-    val insets: WindowInsetsSnapshot,
+    val newValue: WindowInsetsSnapshot,
 ) : IBridgeEventModel
 {
     override fun getJson() = Json.encodeToString(this)
 
     companion object
     {
+        // `option.name` is the Kotlin enum entry's PascalCase name (e.g. "Ime"); the API types promise
+        // the event as camelCase with the value in `newValue`, so use `rawValue` ("ime") instead.
         fun fromSnapshot(option: WindowInsetsOptions, snapshot: WindowInsetsSnapshot) = WindowInsetsChangedEvent(
-            name = "${option.name}WindowInsetsChanged",
-            insets = snapshot,
+            name = "${option.rawValue}WindowInsetsChanged",
+            newValue = snapshot,
         )
     }
 }
