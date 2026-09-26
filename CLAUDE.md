@@ -4,11 +4,36 @@ Fork of [Bridge Launcher](https://github.com/bridgelauncher/launcher) (upstream 
 
 The goal of this fork is to **add new API capabilities** needed by our web launcher, [njpd57/gingerbread-bridge-launcher](https://github.com/njpd57/gingerbread-bridge-launcher) (branch `dev`, Vue 3 + TS). The roadmap, with a proposed API and implementation notes for each feature, is on Confluence: **"Mejoras propuestas a Bridge (fork)"**, https://quickware.atlassian.net/wiki/spaces/~712020439862fa4a724279bd9c184cf15d81ab/pages/5373953 (in Spanish). Read it before starting a feature and follow its recommended order.
 
+## Fork status (2026-09-25)
+
+Everything below is on `main`, tested on the Flip5 and used by the web launcher (see its `FEATURES.md`). The Confluence page still describes most of it as a proposal.
+
+**Added to the JS API** (all in `JSToBridgeAPI.kt` / `BridgeToJSAPI.kt`, grouped by `// region`):
+- Night mode: `getCanRequestSystemNightMode()` (alias of `getCanSetSystemNightMode()`, matching `Bridge.d.ts`).
+- Orientation: `getScreenOrientation`, `requestSetScreenOrientation('portrait' | 'unspecified')`, event `screenOrientationChanged`; also a checkbox in Bridge settings (Overlays).
+- `<input type="file">` opens Android's picker (`BridgeWebChromeClient.onShowFileChooser`, no JS method).
+- URLs and default apps: `requestOpenUrl` (http/https/tel/mailto/sms/smsto/geo only), `getDefaultAppPackageName('dialer' | 'browser' | 'sms' | 'email' | 'camera')`.
+- Notifications (needs notification access): `getCanReadNotifications`, `requestOpenNotificationAccessSettings`, `getNotificationsURL`, `getNotificationIconURL`, `requestOpenNotification`, `requestDismissNotification`; events `canReadNotificationsChanged`, `notificationPosted`, `notificationRemoved`. Notifications carry `isMedia`.
+- Quick settings: `requestOpenSystemPanel`, flashlight, brightness (auto / level), auto-rotate, master sync, `getWifiEnabled`, `getBluetoothEnabled`, `getLocationEnabled`, and "Modify system settings" (`getCanWriteSystemSettings`, `requestOpenWriteSystemSettingsPermission`), each with its `…Changed` event.
+- Music (needs notification access): `getMediaSession`, `getMediaArtURL`, `requestMediaAction`, `requestOpenMediaApp`, event `mediaSessionChanged`.
+- Connectivity: `getConnectivity` (network in use, Wi-Fi and mobile levels 0–4, data activity measured from `TrafficStats`), event `connectivityChanged`.
+- App shortcuts: `getCanAccessAppShortcuts`, `getAppShortcutsURL`, `getAppShortcutIconURL`, `requestStartAppShortcut`.
+- Calendar (READ_CALENDAR, asked with Android's dialog): `getCanReadCalendar`, `requestCalendarPermission`, `getCalendarEventsURL`, `requestOpenCalendarEvent`, `requestOpenCalendarAt`; events `canReadCalendarChanged`, `calendarChanged`.
+
+**Fixed:** intermittent `ERR_NAME_NOT_RESOLVED` (the WebView clients were set after the first `loadUrl`); "homeScreenContext is null" after opening another app.
+
+**Known Bridge bugs, not fixed yet** (found by the launcher, also in upstream):
+- `WindowInsetsSnapshot.getSnapshot()` passes `(left, top, right, bottom)` positionally to a constructor declared `(top, left, right, bottom)`, so **top and left are swapped in every inset** (getters and events). On the Flip5 in portrait the status bar arrives as `left: 33, top: 0`. The fix is to pass them by name; launchers would need a way to tell fixed builds apart (e.g. a new method).
+- Insets events are sent as `ImeWindowInsetsChanged` (enum name) with the value in `insets`, not `imeWindowInsetsChanged` / `newValue` as the API types say.
+
+**Deprioritized by the user:** 1.6 remote debugging, `requestOpenDarkModeSettings`, a generic `requestStartActivity`. **Remaining from the roadmap:** 2.6 usage stats, 3.1 native widgets. Roadmap item 2.1 (status bar insets) turned out to be the top/left swap above.
+
 ## Scope rules
 
 - Focus on the new features. Do **not** refactor, rename or "clean up" existing code (the `api2`/`ui2`/`settings2` naming, `HomeScreen2`, etc.) unless a feature requires it.
 - Known tech debt, leave alone unless asked: `services/iconpacks/` and `services/iconpackcache/` are near-duplicate packages (each has its own `AppFilterXMLParser` and `InstalledIconPacksHolder`). `BridgeLauncherApplication` wires `iconpackcache`, while some UI code (`AppDrawerVM`, `AppIcon`, `ExportForMock`) still imports `iconpacks`.
 - Branch: `main` (there is no `master`).
+- **Commits:** Claude commits and pushes this repo once the user confirms a change works on the phone. The web launcher repo is committed by its own Claude session: leave launcher changes uncommitted and list the files (two sessions sharing its git index swept each other's staged files into the wrong commit).
 
 ## Build & run
 
@@ -36,7 +61,7 @@ Single module `app/`, package `com.tored.bridgelauncher` (paths below are relati
 - **`api2/jstobridge/JSToBridgeAPI.kt`:** methods callable from JS as `window.Bridge.*`, registered in `ui2/home/composables/WebViewSetup.kt` via `addJavascriptInterface(jsToBridgeAPI, "Bridge")`.
 - **`api2/bridgetojs/`:** events pushed to JS. `BridgeToJSAPI.sendBridgeEvent(model)` calls `onBridgeEvent(json)` in the WebView. There is one event class per event in `events/<group>/`.
 - **`api2/server/`:** `BridgeServer` intercepts WebView requests to a virtual host. It serves the project files (`BridgeFileServer`) and JSON/image endpoints (`endpoints/*Endpoint.kt`). Use this for anything large or binary (lists, icons, album art) instead of returning it from a JS interface method.
-- **`api2/webview/`:** `BridgeWebViewClient`, and `BridgeWebChromeClient`, which currently only forwards console messages.
+- **`api2/webview/`:** `BridgeWebViewClient`; `BridgeWebChromeClient`, which forwards console messages and opens the file picker through `BridgeFileChooser`; `BridgeRuntimePermissionRequester`. The last two are implemented by `HomeScreenActivity` and handed over in `HomeScreen2VM.afterCreate`.
 - **`services/`:** state holders (apps, perms, insets, UI mode, lifecycle events, …), caches, and system components (accessibility service, device admin, QS tile, broadcast receiver, notification listener).
 - **System-created components** (accessibility service, `BridgeNotificationListenerService`) aren't built in `createServices()`. They reach the services through `bridgeLauncherApplication.services`, and expose themselves through a `companion object { var instance }` for actions that need them (e.g. `cancelNotification`). `NotificationsHolder` keeps the active notifications and throttles `Posted` events per key. `QuickSettingsHolder` exposes the toggles apps can still change (flashlight, brightness, auto-rotate, master sync) as flows, observing the system settings; Wi-Fi, Bluetooth, NFC and location can only be opened (`SystemPanelStringOptions`). `MediaSessionsHolder` follows the playing media session; Android only lists sessions to notification listeners, so `BridgeNotificationListenerService` starts and stops it. `QuickSettingsHolder` also reports whether Wi-Fi, Bluetooth and location are on (Bluetooth's broadcast needs a runtime permission from Android 12, so it's re-read when the home screen regains focus: `HomeScreenActivity.onWindowFocusChanged`). `AppShortcutsHolder` wraps `LauncherApps` for apps' shortcuts (only the default launcher may read them, Android 7.1+). `CalendarHolder` reads calendar event instances (READ_CALENDAR) and signals changes. `ConnectivityHolder` reports the network in use, Wi-Fi and mobile signal levels (0 to 4) and mobile data activity, without runtime permissions.
 - **`services/settings2/`:** settings stored in DataStore. They are declared in `BridgeSettings` and read as flows with `useBridgeSettingStateFlow`.
@@ -69,7 +94,7 @@ Follow the existing style:
 
 ## Gotchas
 
-- **Name mismatch bug:** Kotlin has `getCanSetSystemNightMode()`, but `Bridge.d.ts` declares `getCanRequestSystemNightMode()`. Calling a method missing from the JS interface throws, which broke loading in our launcher. This is roadmap item #1. The fix is to add the `getCanRequestSystemNightMode` alias, and it's a good upstream PR candidate.
+- **Calling a method missing from the JS interface throws** in JS, which once broke loading the whole launcher (`Bridge.d.ts` declared `getCanRequestSystemNightMode`, which upstream lacks; the fork now has it as an alias). Launchers must guard fork methods with `bridgeHas()`. The alias and the `ERR_NAME_NOT_RESOLVED` fix are good upstream PR candidates.
 - `@JavascriptInterface` methods run on a WebView background thread, not the main thread. Anything that touches Views or the WebView must be posted to the main thread. Settings writes go through `tryEditPrefs` (which uses `runBlocking`).
 - `HomeScreenActivity` declares `configChanges` including `orientation` in the manifest and handles rotation itself. It has no `screenOrientation`.
 - **Runtime permissions with Android's dialog** (e.g. READ_CALENDAR) go through `BridgeRuntimePermissionRequester`, registered by `HomeScreenActivity` and handed to `JSToBridgeAPI.permissionRequester` via `HomeScreen2VM.afterCreate`; when a permission was refused for good, it opens Bridge's app settings instead.
