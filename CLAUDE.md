@@ -37,7 +37,8 @@ Single module `app/`, package `com.tored.bridgelauncher` (paths below are relati
 - **`api2/bridgetojs/`:** events pushed to JS. `BridgeToJSAPI.sendBridgeEvent(model)` calls `onBridgeEvent(json)` in the WebView. There is one event class per event in `events/<group>/`.
 - **`api2/server/`:** `BridgeServer` intercepts WebView requests to a virtual host. It serves the project files (`BridgeFileServer`) and JSON/image endpoints (`endpoints/*Endpoint.kt`). Use this for anything large or binary (lists, icons, album art) instead of returning it from a JS interface method.
 - **`api2/webview/`:** `BridgeWebViewClient`, and `BridgeWebChromeClient`, which currently only forwards console messages.
-- **`services/`:** state holders (apps, perms, insets, UI mode, lifecycle events, …), caches, and system components (accessibility service, device admin, QS tile, broadcast receiver).
+- **`services/`:** state holders (apps, perms, insets, UI mode, lifecycle events, …), caches, and system components (accessibility service, device admin, QS tile, broadcast receiver, notification listener).
+- **System-created components** (accessibility service, `BridgeNotificationListenerService`) aren't built in `createServices()`. They reach the services through `bridgeLauncherApplication.services`, and expose themselves through a `companion object { var instance }` for actions that need them (e.g. `cancelNotification`). `NotificationsHolder` keeps the active notifications and throttles `Posted` events per key.
 - **`services/settings2/`:** settings stored in DataStore. They are declared in `BridgeSettings` and read as flows with `useBridgeSettingStateFlow`.
 - **`ui2/`:** Compose screens (`home`, `appdrawer`, `settings`, `devconsole`, `dirpicker`). Each screen is split into `*VM`, `*Actions`, `*State` and `composables/`. `HomeScreenActivity` hosts the WebView.
 
