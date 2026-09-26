@@ -18,6 +18,7 @@ import com.tored.bridgelauncher.services.mockexport.MockExporter
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
+import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
 import com.tored.bridgelauncher.services.system.BridgeLauncherBroadcastReceiver
 import com.tored.bridgelauncher.services.uimode.SystemUIModeHolder
 import com.tored.bridgelauncher.services.windowinsetsholder.WindowInsetsHolder
@@ -38,6 +39,7 @@ data class BridgeServices(
     val quickSettingsHolder: QuickSettingsHolder,
     val mediaSessionsHolder: MediaSessionsHolder,
     val connectivityHolder: ConnectivityHolder,
+    val appShortcutsHolder: AppShortcutsHolder,
 
 // apps & icon packs
     val installedAppsHolder: InstalledAppsHolder,

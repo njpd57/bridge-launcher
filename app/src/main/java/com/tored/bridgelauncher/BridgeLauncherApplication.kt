@@ -22,6 +22,7 @@ import com.tored.bridgelauncher.services.mockexport.MockExporter
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
+import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
 import com.tored.bridgelauncher.services.system.BridgeButtonQSTileService
 import com.tored.bridgelauncher.services.system.BridgeLauncherBroadcastReceiver
 import com.tored.bridgelauncher.services.system.BridgeLauncherDeviceAdminReceiver
@@ -78,6 +79,7 @@ class BridgeLauncherApplication : Application()
         val quickSettingsHolder = QuickSettingsHolder(this)
         val mediaSessionsHolder = MediaSessionsHolder(this)
         val connectivityHolder = ConnectivityHolder(this)
+        val appShortcutsHolder = AppShortcutsHolder(this)
         val systemUIModeHolder = SystemUIModeHolder(
             _uiModeManager = uiModeManager
         )
@@ -103,6 +105,7 @@ class BridgeLauncherApplication : Application()
             _quickSettings = quickSettingsHolder,
             _media = mediaSessionsHolder,
             _connectivity = connectivityHolder,
+            _shortcuts = appShortcutsHolder,
         )
 
         val bridgeServer = BridgeServer(
@@ -111,6 +114,7 @@ class BridgeLauncherApplication : Application()
             _iconPacks = installedIconPacksHolder,
             _notifications = notificationsHolder,
             _media = mediaSessionsHolder,
+            _shortcuts = appShortcutsHolder,
         )
 
         val consoleMessagesHolder = DevConsoleMessagesHolder()
@@ -139,6 +143,7 @@ class BridgeLauncherApplication : Application()
             quickSettingsHolder = quickSettingsHolder,
             mediaSessionsHolder = mediaSessionsHolder,
             connectivityHolder = connectivityHolder,
+            appShortcutsHolder = appShortcutsHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,

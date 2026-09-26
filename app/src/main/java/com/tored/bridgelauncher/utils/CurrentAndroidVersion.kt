@@ -20,6 +20,7 @@ class CurrentAndroidVersion
         fun supportsAccessiblityServiceScreenLock() = from(Build.VERSION_CODES.P)
         fun supportsPackageInfoLongVersionCode() = from(Build.VERSION_CODES.P)
         fun supportsSettingsPanels() = from(Build.VERSION_CODES.Q)
+        fun supportsAppShortcuts() = from(Build.VERSION_CODES.N_MR1)
         fun supportsReadingSignalStrength() = from(Build.VERSION_CODES.P)
         fun supportsNetworkCapabilitiesSignalStrength() = from(Build.VERSION_CODES.Q)
         fun supportsWifiManagerSignalLevel() = from(Build.VERSION_CODES.R)

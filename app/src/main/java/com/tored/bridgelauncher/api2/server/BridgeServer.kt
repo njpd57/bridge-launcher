@@ -5,6 +5,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import com.tored.bridgelauncher.BridgeLauncherApplication
 import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutIconsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.BridgeFileServer
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
@@ -17,6 +19,7 @@ import com.tored.bridgelauncher.services.apps.SerializableInstalledApp
 import com.tored.bridgelauncher.services.iconpackcache.InstalledIconPacksHolder
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
+import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
 import com.tored.bridgelauncher.services.settings2.settingsDataStore
@@ -50,6 +53,7 @@ class BridgeServer(
     private val _iconPacks: InstalledIconPacksHolder,
     private val _notifications: NotificationsHolder,
     private val _media: MediaSessionsHolder,
+    private val _shortcuts: AppShortcutsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main) + SupervisorJob()
@@ -72,6 +76,8 @@ class BridgeServer(
         ENDPOINT_NOTIFICATIONS to NotificationsEndpoint(_notifications),
         ENDPOINT_NOTIFICATION_ICONS to NotificationIconsEndpoint(_app, _notifications),
         ENDPOINT_MEDIA_ART to MediaArtEndpoint(_media),
+        ENDPOINT_APP_SHORTCUTS to AppShortcutsEndpoint(_shortcuts),
+        ENDPOINT_APP_SHORTCUT_ICONS to AppShortcutIconsEndpoint(_shortcuts),
     )
 
     suspend fun handle(req: WebResourceRequest): WebResourceResponse?
@@ -125,5 +131,7 @@ class BridgeServer(
         const val ENDPOINT_NOTIFICATIONS = "notifications"
         const val ENDPOINT_NOTIFICATION_ICONS = "notificationicons"
         const val ENDPOINT_MEDIA_ART = "mediaart"
+        const val ENDPOINT_APP_SHORTCUTS = "appshortcuts"
+        const val ENDPOINT_APP_SHORTCUT_ICONS = "appshortcuticons"
     }
 }

@@ -24,6 +24,8 @@ import androidx.datastore.preferences.core.edit
 import com.tored.bridgelauncher.BridgeLauncherApplication
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutIconsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.MediaArtEndpoint
@@ -45,6 +47,7 @@ import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.media.SerializableMediaSession
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
+import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
 import com.tored.bridgelauncher.services.quicksettings.ScreenBrightness
 import com.tored.bridgelauncher.services.settings2.BridgeSetting
 import com.tored.bridgelauncher.services.settings2.BridgeSettings
@@ -92,6 +95,7 @@ class JSToBridgeAPI(
     private val _quickSettings: QuickSettingsHolder,
     private val _media: MediaSessionsHolder,
     private val _connectivity: ConnectivityHolder,
+    private val _shortcuts: AppShortcutsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -467,6 +471,39 @@ class JSToBridgeAPI(
     {
         if (!_app.checkCanWriteSystemSettings())
             throw Exception("Bridge needs the \"Modify system settings\" permission for this. Open it with requestOpenWriteSystemSettingsPermission().")
+    }
+
+    // endregion
+
+
+    // region app shortcuts
+
+    /** Whether Bridge can read apps' shortcuts: only the default launcher can, on Android 7.1+. */
+    @JavascriptInterface
+    fun getCanAccessAppShortcuts() = _shortcuts.canAccess
+
+    /** JSON `{ shortcuts: [{ id, shortLabel, longLabel }] }`, in the order launchers show them. */
+    @JavascriptInterface
+    fun getAppShortcutsURL(packageName: String) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_APP_SHORTCUTS,
+            AppShortcutsEndpoint.QUERY_PACKAGE_NAME to packageName,
+        )
+
+    @JavascriptInterface
+    fun getAppShortcutIconURL(packageName: String, shortcutId: String) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_APP_SHORTCUT_ICONS,
+            AppShortcutIconsEndpoint.QUERY_PACKAGE_NAME to packageName,
+            // shortcut ids can contain any character
+            AppShortcutIconsEndpoint.QUERY_SHORTCUT_ID to Uri.encode(shortcutId),
+        )
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestStartAppShortcut(packageName: String, shortcutId: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed) { _shortcuts.start(packageName, shortcutId) }
     }
 
     // endregion
