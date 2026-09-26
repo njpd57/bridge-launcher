@@ -26,17 +26,21 @@ import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.MediaArtEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.NotificationIconsEndpoint
 import com.tored.bridgelauncher.api2.server.getBridgeApiEndpointURL
 import com.tored.bridgelauncher.api2.shared.BridgeButtonVisibilityStringOptions
 import com.tored.bridgelauncher.api2.shared.BridgeThemeStringOptions
 import com.tored.bridgelauncher.api2.shared.DefaultAppRoleStringOptions
+import com.tored.bridgelauncher.api2.shared.MediaActionStringOptions
 import com.tored.bridgelauncher.api2.shared.OverscrollEffectsStringOptions
 import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemNightModeStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemPanelStringOptions
 import com.tored.bridgelauncher.services.displayshape.DisplayShapeHolder
+import com.tored.bridgelauncher.services.media.MediaSessionsHolder
+import com.tored.bridgelauncher.services.media.SerializableMediaSession
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.quicksettings.ScreenBrightness
@@ -73,6 +77,7 @@ import com.tored.bridgelauncher.utils.toPx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
 
 private const val TAG = "JSToBridge"
@@ -83,6 +88,7 @@ class JSToBridgeAPI(
     private val _displayShapeHolder: DisplayShapeHolder,
     private val _notifications: NotificationsHolder,
     private val _quickSettings: QuickSettingsHolder,
+    private val _media: MediaSessionsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -253,15 +259,7 @@ class JSToBridgeAPI(
             val contentIntent = notification.contentIntent
                 ?: throw Exception("Notification ${q(key)} can't be opened (it has no content intent).")
 
-            // Android 14 blocks activity starts from PendingIntents sent by apps that don't opt in
-            val options = if (CurrentAndroidVersion.supportsPendingIntentBackgroundActivityStartMode())
-                ActivityOptions.makeBasic()
-                    .setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
-                    .toBundle()
-            else
-                null
-
-            contentIntent.send(this, 0, null, null, null, null, options)
+            contentIntent.send(this, 0, null, null, null, null, pendingIntentSendOptions())
 
             if (notification.flags and Notification.FLAG_AUTO_CANCEL != 0)
                 BridgeNotificationListenerService.instance?.cancelNotification(key)
@@ -284,8 +282,69 @@ class JSToBridgeAPI(
         }
     }
 
+    // Android 14 blocks activity starts from PendingIntents sent by apps that don't opt in
+    private fun pendingIntentSendOptions() = if (CurrentAndroidVersion.supportsPendingIntentBackgroundActivityStartMode())
+        ActivityOptions.makeBasic()
+            .setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+            .toBundle()
+    else
+        null
+
     private fun getActiveNotificationOrThrow(key: String) = _notifications[key]
         ?: throw Exception("No active notification with key ${q(key)}.")
+
+    // endregion
+
+
+    // region media
+
+    /** The current media session as JSON, or `null` (needs notification access). Fires `mediaSessionChanged`. */
+    @JavascriptInterface
+    fun getMediaSession(): String = Json.encodeToString(SerializableMediaSession.serializer().nullable, _media.session.value)
+
+    /** The current track's art; the URL changes with every track. */
+    @JavascriptInterface
+    fun getMediaArtURL() =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_MEDIA_ART,
+            MediaArtEndpoint.QUERY_VERSION to (_media.session.value?.artVersion ?: 0),
+        )
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestMediaAction(action: String, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            val controller = _media.controller ?: throw Exception("Nothing is playing.")
+            val controls = controller.transportControls
+            when (MediaActionStringOptions.fromStringOrThrow(action))
+            {
+                MediaActionStringOptions.Play -> controls.play()
+                MediaActionStringOptions.Pause -> controls.pause()
+                MediaActionStringOptions.PlayPause ->
+                    if (controller.playbackState?.state == android.media.session.PlaybackState.STATE_PLAYING) controls.pause() else controls.play()
+                MediaActionStringOptions.Next -> controls.skipToNext()
+                MediaActionStringOptions.Previous -> controls.skipToPrevious()
+            }
+        }
+    }
+
+    /** Opens the app that's playing, on its player screen when it says which one that is. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenMediaApp(showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed)
+        {
+            val controller = _media.controller ?: throw Exception("Nothing is playing.")
+            val sessionActivity = controller.sessionActivity
+            if (sessionActivity != null)
+                sessionActivity.send(this, 0, null, null, null, null, pendingIntentSendOptions())
+            else
+                launchApp(controller.packageName)
+        }
+    }
 
     // endregion
 

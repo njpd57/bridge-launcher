@@ -9,6 +9,7 @@ import com.tored.bridgelauncher.api2.bridgetojs.events.apps.AppRemovedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.AfterResumeEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.BeforePauseEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.lifecycle.NewIntentEvent
+import com.tored.bridgelauncher.api2.bridgetojs.events.media.MediaSessionChangedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationPostedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.notifications.NotificationRemovedEvent
 import com.tored.bridgelauncher.api2.bridgetojs.events.perms.CanLockScreenChangedEvent
@@ -36,6 +37,7 @@ import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.services.apps.InstalledAppListChangeEvent
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
+import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.notifications.NotificationListChangeEvent
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.notifications.toSerializable
@@ -63,6 +65,7 @@ class BridgeToJSAPI(
     private val _lifecycleEventsHolder: LifecycleEventsHolder,
     private val _notifications: NotificationsHolder,
     private val _quickSettings: QuickSettingsHolder,
+    private val _media: MediaSessionsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -156,6 +159,11 @@ class BridgeToJSAPI(
             onCollect(screenBrightness) { ScreenBrightnessChangedEvent(it) }
             onCollect(isAutoRotateOn) { AutoRotateChangedEvent(it) }
             onCollect(isMasterSyncOn) { MasterSyncChangedEvent(it) }
+        }
+
+        with(_media)
+        {
+            onCollect(session) { MediaSessionChangedEvent(it) }
         }
 
         with(_notifications)

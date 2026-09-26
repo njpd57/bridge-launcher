@@ -25,6 +25,8 @@ class BridgeNotificationListenerService : NotificationListenerService()
         Log.d(TAG, "onListenerConnected")
         instance = this
         _services.notificationsHolder.notifyListenerConnected(activeNotifications ?: emptyArray())
+        // media sessions are only listed to notification listeners
+        _services.mediaSessionsHolder.startListening()
         _services.storagePermsHolder.notifyPermsMightHaveChanged()
     }
 
@@ -33,6 +35,7 @@ class BridgeNotificationListenerService : NotificationListenerService()
         Log.d(TAG, "onListenerDisconnected")
         instance = null
         _services.notificationsHolder.notifyListenerDisconnected()
+        _services.mediaSessionsHolder.stopListening()
         _services.storagePermsHolder.notifyPermsMightHaveChanged()
 
         // One UI can unbind listeners on its own; ask to be bound again unless access was revoked

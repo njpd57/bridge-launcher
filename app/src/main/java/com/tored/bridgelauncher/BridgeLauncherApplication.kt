@@ -16,6 +16,7 @@ import com.tored.bridgelauncher.services.iconcache.IconCache
 import com.tored.bridgelauncher.services.iconpackcache.IconPackCache
 import com.tored.bridgelauncher.services.iconpackcache.InstalledIconPacksHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
+import com.tored.bridgelauncher.services.media.MediaSessionsHolder
 import com.tored.bridgelauncher.services.mockexport.MockExporter
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
@@ -74,6 +75,7 @@ class BridgeLauncherApplication : Application()
         val displayShapeHolder = DisplayShapeHolder()
         val notificationsHolder = NotificationsHolder()
         val quickSettingsHolder = QuickSettingsHolder(this)
+        val mediaSessionsHolder = MediaSessionsHolder(this)
         val systemUIModeHolder = SystemUIModeHolder(
             _uiModeManager = uiModeManager
         )
@@ -87,6 +89,7 @@ class BridgeLauncherApplication : Application()
             _systemUIMode = systemUIModeHolder,
             _notifications = notificationsHolder,
             _quickSettings = quickSettingsHolder,
+            _media = mediaSessionsHolder,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
@@ -95,6 +98,7 @@ class BridgeLauncherApplication : Application()
             _displayShapeHolder = displayShapeHolder,
             _notifications = notificationsHolder,
             _quickSettings = quickSettingsHolder,
+            _media = mediaSessionsHolder,
         )
 
         val bridgeServer = BridgeServer(
@@ -102,6 +106,7 @@ class BridgeLauncherApplication : Application()
             installedAppsHolder,
             _iconPacks = installedIconPacksHolder,
             _notifications = notificationsHolder,
+            _media = mediaSessionsHolder,
         )
 
         val consoleMessagesHolder = DevConsoleMessagesHolder()
@@ -128,6 +133,7 @@ class BridgeLauncherApplication : Application()
             displayShapeHolder = displayShapeHolder,
             notificationsHolder = notificationsHolder,
             quickSettingsHolder = quickSettingsHolder,
+            mediaSessionsHolder = mediaSessionsHolder,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,
