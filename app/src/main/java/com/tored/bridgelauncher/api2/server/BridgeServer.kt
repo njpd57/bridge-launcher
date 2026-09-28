@@ -12,8 +12,11 @@ import com.tored.bridgelauncher.api2.server.endpoints.AppsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.BridgeFileServer
 import com.tored.bridgelauncher.api2.server.endpoints.CalendarEventsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.ContactPhotosEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.ProfileAppIconsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.ProfileAppsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.ContactsEndpoint
 import com.tored.bridgelauncher.services.contacts.ContactsHolder
+import com.tored.bridgelauncher.services.apps.ProfileAppsHolder
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.MediaArtEndpoint
@@ -64,6 +67,7 @@ class BridgeServer(
     private val _calendar: CalendarHolder,
     private val _usage: UsageStatsHolder,
     private val _contacts: ContactsHolder,
+    private val _profileApps: ProfileAppsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main) + SupervisorJob()
@@ -92,6 +96,8 @@ class BridgeServer(
         ENDPOINT_APP_USAGE to AppUsageEndpoint(_usage),
         ENDPOINT_CONTACTS to ContactsEndpoint(_contacts),
         ENDPOINT_CONTACT_PHOTOS to ContactPhotosEndpoint(_contacts),
+        ENDPOINT_PROFILE_APPS to ProfileAppsEndpoint(_profileApps),
+        ENDPOINT_PROFILE_APP_ICONS to ProfileAppIconsEndpoint(_profileApps),
     )
 
     suspend fun handle(req: WebResourceRequest): WebResourceResponse?
@@ -151,5 +157,7 @@ class BridgeServer(
         const val ENDPOINT_APP_USAGE = "appusage"
         const val ENDPOINT_CONTACTS = "contacts"
         const val ENDPOINT_CONTACT_PHOTOS = "contactphotos"
+        const val ENDPOINT_PROFILE_APPS = "profileapps"
+        const val ENDPOINT_PROFILE_APP_ICONS = "profileappicons"
     }
 }

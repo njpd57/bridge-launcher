@@ -27,6 +27,7 @@ import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.api2.server.endpoints.AppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppShortcutsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.ProfileAppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.CalendarEventsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.AppUsageEndpoint
 import com.tored.bridgelauncher.services.usage.UsageStatsHolder
@@ -63,6 +64,7 @@ import com.tored.bridgelauncher.services.media.SerializableMediaSession
 import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
+import com.tored.bridgelauncher.services.apps.ProfileAppsHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import android.content.ContentUris
@@ -127,6 +129,7 @@ class JSToBridgeAPI(
     private val _perms: PermsHolder,
     private val _usage: UsageStatsHolder,
     private val _contacts: ContactsHolder,
+    private val _profileApps: ProfileAppsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -229,6 +232,37 @@ class JSToBridgeAPI(
     fun requestLaunchApp(packageName: String, showToastIfFailed: Boolean = true): Boolean
     {
         return tryRunInHomescreenContext(showToastIfFailed) { launchApp(packageName) }
+    }
+
+    /**
+     * JSON `{ apps: [{ packageName, label, userSerial, profile, isPaused }] }`: the apps of every profile, the personal
+     * one included. `profile` is `'personal'` or `'work'`; `userSerial` identifies the profile in the `…ProfileApp…` methods.
+     */
+    @JavascriptInterface
+    fun getProfileAppsURL() = getBridgeApiEndpointURL(BridgeServer.ENDPOINT_PROFILE_APPS)
+
+    /** The app's icon in the profile, with the profile's badge (the work briefcase). */
+    @JavascriptInterface
+    fun getProfileAppIconURL(packageName: String, userSerial: Long) =
+        getBridgeApiEndpointURL(
+            BridgeServer.ENDPOINT_PROFILE_APP_ICONS,
+            ProfileAppIconsEndpoint.QUERY_PACKAGE_NAME to packageName,
+            ProfileAppIconsEndpoint.QUERY_USER_SERIAL to userSerial,
+        )
+
+    /** Opens the app in its profile (e.g. work Teams). If work apps are paused, Android asks to turn them on. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestLaunchProfileApp(packageName: String, userSerial: Long, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed) { _profileApps.launch(packageName, userSerial) }
+    }
+
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenProfileAppInfo(packageName: String, userSerial: Long, showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed) { _profileApps.openAppInfo(packageName, userSerial) }
     }
 
     /** @return package name of the user's default app for [role], or null if there is none (Android would show a chooser). */

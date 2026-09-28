@@ -10,6 +10,7 @@ import com.tored.bridgelauncher.api2.jstobridge.JSToBridgeAPI
 import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.services.BridgeServices
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
+import com.tored.bridgelauncher.services.apps.ProfileAppsHolder
 import com.tored.bridgelauncher.services.alarm.AlarmHolder
 import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
@@ -70,6 +71,7 @@ class BridgeLauncherApplication : Application()
         val permsHolder = PermsHolder(this)
 
         val installedAppsHolder = InstalledAppsHolder(pm)
+        val profileAppsHolder = ProfileAppsHolder(this)
         val iconPackCache = IconPackCache()
         val appIconsCache = IconCache(pm, installedAppsHolder, iconPackCache)
         val installedIconPacksHolder = InstalledIconPacksHolder(
@@ -111,6 +113,7 @@ class BridgeLauncherApplication : Application()
             _contacts = contactsHolder,
             _battery = batteryHolder,
             _alarm = alarmHolder,
+            _profileApps = profileAppsHolder,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
@@ -128,6 +131,7 @@ class BridgeLauncherApplication : Application()
             _perms = permsHolder,
             _usage = usageStatsHolder,
             _contacts = contactsHolder,
+            _profileApps = profileAppsHolder,
         )
 
         val bridgeServer = BridgeServer(
@@ -140,6 +144,7 @@ class BridgeLauncherApplication : Application()
             _calendar = calendarHolder,
             _usage = usageStatsHolder,
             _contacts = contactsHolder,
+            _profileApps = profileAppsHolder,
         )
 
         val consoleMessagesHolder = DevConsoleMessagesHolder()
@@ -177,6 +182,7 @@ class BridgeLauncherApplication : Application()
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,
+            profileAppsHolder = profileAppsHolder,
             installedIconPacksHolder = installedIconPacksHolder,
             iconPackCache = iconPackCache,
             iconCache = appIconsCache,
@@ -203,6 +209,7 @@ class BridgeLauncherApplication : Application()
         services.installedIconPacksHolder.startup()
         services.iconCache.startup()
         services.installedAppsHolder.startup()
+        services.profileAppsHolder.startup()
         services.quickSettingsHolder.startup()
         services.connectivityHolder.startup()
         services.batteryHolder.startup()

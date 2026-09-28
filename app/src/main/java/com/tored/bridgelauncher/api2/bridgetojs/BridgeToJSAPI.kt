@@ -51,6 +51,8 @@ import com.tored.bridgelauncher.api2.shared.OverscrollEffectsStringOptions
 import com.tored.bridgelauncher.api2.shared.ScreenOrientationStringOptions
 import com.tored.bridgelauncher.api2.shared.SystemBarAppearanceStringOptions
 import com.tored.bridgelauncher.services.apps.InstalledAppListChangeEvent
+import com.tored.bridgelauncher.services.apps.ProfileAppsHolder
+import com.tored.bridgelauncher.api2.bridgetojs.events.apps.ProfileAppsChangedEvent
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.lifecycleevents.LifecycleEventsHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
@@ -91,6 +93,7 @@ class BridgeToJSAPI(
     private val _contacts: ContactsHolder,
     private val _battery: BatteryHolder,
     private val _alarm: AlarmHolder,
+    private val _profileApps: ProfileAppsHolder,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -141,6 +144,11 @@ class BridgeToJSAPI(
                     is InstalledAppListChangeEvent.Removed -> AppRemovedEvent(it.packageName)
                 }
             }
+        }
+
+        with(_profileApps)
+        {
+            onCollect(changes) { ProfileAppsChangedEvent() }
         }
 
         with(BridgeSettings)
