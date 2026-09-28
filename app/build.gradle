@@ -13,9 +13,9 @@ android {
         applicationId "com.tored.bridgelauncher"
         minSdk 24
         targetSdk 34
-        versionCode 6
-        versionName "0.1.0"
-        versionNameSuffix "alpha"
+        versionCode 7
+        versionName "0.2.0"
+        versionNameSuffix "-fork"
         archivesBaseName = "${applicationId}_${versionCode}_v${versionName}${if (versionNameSuffix?.isAllWhitespace() ?: true) "" else "-${versionNameSuffix}"}"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -26,6 +26,8 @@ android {
 
     buildTypes {
         release {
+            // the fork's releases are signed with the debug key, so they install over debug builds without uninstalling
+            signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

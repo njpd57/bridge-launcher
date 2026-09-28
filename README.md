@@ -1,6 +1,6 @@
 # Bridge Launcher (fork)
 
-This is a fork of [Bridge Launcher](https://github.com/bridgelauncher/launcher) that adds JS API capabilities the original doesn't have, for the [Gingerbread Launcher](https://github.com/njpd57/gingerbread-bridge-launcher) web project. Projects written for the original Bridge keep working; the additions are only extra methods and events:
+This is a fork of [Bridge Launcher](https://github.com/bridgelauncher/launcher) that adds JS API capabilities the original doesn't have, for the [Gingerbread Launcher](https://github.com/njpd57/android-gingerbread-launcher) web project. Projects written for the original Bridge keep working; the additions are only extra methods and events:
 
 - Real notifications (list, icons, open, dismiss) and media controls (what's playing, album art, play/pause/next/previous).
 - Quick settings: flashlight, brightness, auto-rotate, sync, the state of Wi-Fi / Bluetooth / location, and Android's panels for what apps can't toggle.
