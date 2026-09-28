@@ -153,6 +153,7 @@ class HomeScreen2VM(
     {
         _jsToBridgeInterface.homeScreenContext = context
         _jsToBridgeInterface.permissionRequester = permissionRequester
+        _jsToBridgeInterface.fileChooser = fileChooser
         _chromeClient.fileChooser = fileChooser
     }
 
@@ -193,6 +194,7 @@ class HomeScreen2VM(
         if (_jsToBridgeInterface.homeScreenContext !== context) return
         _jsToBridgeInterface.homeScreenContext = null
         _jsToBridgeInterface.permissionRequester = null
+        _jsToBridgeInterface.fileChooser = null
         _chromeClient.fileChooser = null
     }
 

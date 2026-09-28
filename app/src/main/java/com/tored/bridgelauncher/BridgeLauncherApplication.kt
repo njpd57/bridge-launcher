@@ -11,6 +11,7 @@ import com.tored.bridgelauncher.api2.server.BridgeServer
 import com.tored.bridgelauncher.services.BridgeServices
 import com.tored.bridgelauncher.services.apps.InstalledAppsHolder
 import com.tored.bridgelauncher.services.apps.ProfileAppsHolder
+import com.tored.bridgelauncher.services.files.FileSaver
 import com.tored.bridgelauncher.services.alarm.AlarmHolder
 import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
@@ -92,6 +93,7 @@ class BridgeLauncherApplication : Application()
         val contactsHolder = ContactsHolder(this)
         val batteryHolder = BatteryHolder(this)
         val alarmHolder = AlarmHolder(this)
+        val fileSaver = FileSaver(this)
         permsHolder.checkCanReadUsageStats = { usageStatsHolder.canRead }
         permsHolder.notifyPermsMightHaveChanged()
         val systemUIModeHolder = SystemUIModeHolder(
@@ -114,6 +116,7 @@ class BridgeLauncherApplication : Application()
             _battery = batteryHolder,
             _alarm = alarmHolder,
             _profileApps = profileAppsHolder,
+            _fileSaver = fileSaver,
         )
 
         val jsToBridgeAPI = JSToBridgeAPI(
@@ -132,6 +135,7 @@ class BridgeLauncherApplication : Application()
             _usage = usageStatsHolder,
             _contacts = contactsHolder,
             _profileApps = profileAppsHolder,
+            _fileSaver = fileSaver,
         )
 
         val bridgeServer = BridgeServer(
@@ -179,6 +183,7 @@ class BridgeLauncherApplication : Application()
             contactsHolder = contactsHolder,
             batteryHolder = batteryHolder,
             alarmHolder = alarmHolder,
+            fileSaver = fileSaver,
 
             // apps & icon packs
             installedAppsHolder = installedAppsHolder,

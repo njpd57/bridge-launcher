@@ -65,6 +65,8 @@ import com.tored.bridgelauncher.services.notifications.NotificationsHolder
 import com.tored.bridgelauncher.services.quicksettings.QuickSettingsHolder
 import com.tored.bridgelauncher.services.shortcuts.AppShortcutsHolder
 import com.tored.bridgelauncher.services.apps.ProfileAppsHolder
+import com.tored.bridgelauncher.services.files.FileSaver
+import com.tored.bridgelauncher.api2.webview.BridgeFileChooser
 import com.tored.bridgelauncher.services.calendar.CalendarHolder
 import com.tored.bridgelauncher.services.perms.PermsHolder
 import android.content.ContentUris
@@ -130,6 +132,7 @@ class JSToBridgeAPI(
     private val _usage: UsageStatsHolder,
     private val _contacts: ContactsHolder,
     private val _profileApps: ProfileAppsHolder,
+    private val _fileSaver: FileSaver,
 )
 {
     private val _scope = CoroutineScope(Dispatchers.Main)
@@ -142,6 +145,7 @@ class JSToBridgeAPI(
     var webView: WebView? = null
     var homeScreenContext: Context? = null
     var permissionRequester: BridgeRuntimePermissionRequester? = null
+    var fileChooser: BridgeFileChooser? = null
 
 
     // SETTING STATES
@@ -299,6 +303,26 @@ class JSToBridgeAPI(
     fun requestOpenUrl(url: String, showToastIfFailed: Boolean = true): Boolean
     {
         return tryRunInHomescreenContext(showToastIfFailed) { openUrl(url) }
+    }
+
+    // endregion
+
+
+    // region files
+
+    /**
+     * Asks where to save [content] with Android's "Save as" dialog, suggesting [fileName], and writes it there.
+     * Returns whether the dialog could be opened; the outcome arrives as the `fileSaved` event.
+     */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestSaveFile(fileName: String, content: String, mimeType: String = "application/json", showToastIfFailed: Boolean = true): Boolean
+    {
+        return _app.tryRun(showToastIfFailed)
+        {
+            val chooser = fileChooser ?: throw Exception("The home screen isn't ready to save files.")
+            _fileSaver.save(chooser, fileName, mimeType, content)
+        }
     }
 
     // endregion
