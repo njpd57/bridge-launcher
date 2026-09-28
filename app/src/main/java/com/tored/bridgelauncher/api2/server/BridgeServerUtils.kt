@@ -17,6 +17,8 @@ enum class HTTPStatusCode(override val rawValue: Int) : RawRepresentable<Int>
     InternalServerError(500),
     ServiceUnavailable(503),
     NotImplemented(501),
+    BadGateway(502),
+    GatewayTimeout(504),
 }
 
 fun jsonResponse(json: String): WebResourceResponse

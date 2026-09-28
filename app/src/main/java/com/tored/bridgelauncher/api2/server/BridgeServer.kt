@@ -14,6 +14,7 @@ import com.tored.bridgelauncher.api2.server.endpoints.CalendarEventsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.ContactPhotosEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.ProfileAppIconsEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.ProfileAppsEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.ProxyEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.ContactsEndpoint
 import com.tored.bridgelauncher.services.contacts.ContactsHolder
 import com.tored.bridgelauncher.services.apps.ProfileAppsHolder
@@ -98,6 +99,7 @@ class BridgeServer(
         ENDPOINT_CONTACT_PHOTOS to ContactPhotosEndpoint(_contacts),
         ENDPOINT_PROFILE_APPS to ProfileAppsEndpoint(_profileApps),
         ENDPOINT_PROFILE_APP_ICONS to ProfileAppIconsEndpoint(_profileApps),
+        ENDPOINT_PROXY to ProxyEndpoint(),
     )
 
     suspend fun handle(req: WebResourceRequest): WebResourceResponse?
@@ -159,5 +161,6 @@ class BridgeServer(
         const val ENDPOINT_CONTACT_PHOTOS = "contactphotos"
         const val ENDPOINT_PROFILE_APPS = "profileapps"
         const val ENDPOINT_PROFILE_APP_ICONS = "profileappicons"
+        const val ENDPOINT_PROXY = "proxy"
     }
 }

@@ -39,6 +39,7 @@ import android.app.RemoteInput
 import com.tored.bridgelauncher.api2.webview.BridgeRuntimePermissionRequester
 import com.tored.bridgelauncher.api2.server.endpoints.IconPackContentEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.IconPacksEndpoint
+import com.tored.bridgelauncher.api2.server.endpoints.ProxyEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.MediaArtEndpoint
 import com.tored.bridgelauncher.api2.server.endpoints.NotificationIconsEndpoint
 import com.tored.bridgelauncher.api2.server.getBridgeApiEndpointURL
@@ -211,6 +212,10 @@ class JSToBridgeAPI(
 
     @JavascriptInterface
     fun getAppsURL() = getBridgeApiEndpointURL(BridgeServer.ENDPOINT_APPS)
+
+    /** A URL that downloads [url] (http or https) through Bridge, for sites that don't allow CORS. 502 if it fails, 504 on a timeout. */
+    @JavascriptInterface
+    fun getProxyURL(url: String) = getBridgeApiEndpointURL(BridgeServer.ENDPOINT_PROXY, ProxyEndpoint.QUERY_URL to url)
 
     // endregion
 
