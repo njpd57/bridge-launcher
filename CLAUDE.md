@@ -36,7 +36,7 @@ Everything below is on `main`, tested on the Flip5 and used by the web launcher 
 - Focus on the new features. Do **not** refactor, rename or "clean up" existing code (the `api2`/`ui2`/`settings2` naming, `HomeScreen2`, etc.) unless a feature requires it.
 - Known tech debt, leave alone unless asked: `services/iconpacks/` and `services/iconpackcache/` are near-duplicate packages (each has its own `AppFilterXMLParser` and `InstalledIconPacksHolder`). `BridgeLauncherApplication` wires `iconpackcache`, while some UI code (`AppDrawerVM`, `AppIcon`, `ExportForMock`) still imports `iconpacks`.
 - Branch: `main` (there is no `master`).
-- **Commits:** Claude commits and pushes this repo once the user confirms a change works on the phone. The web launcher repo is committed by its own Claude session: leave launcher changes uncommitted and list the files (two sessions sharing its git index swept each other's staged files into the wrong commit).
+- **Commits:** once the user confirms a change works on the phone, delegate the commit and push to the `launcher-committer` subagent (Sonnet, defined in `~/.claude/agents/launcher-committer.md`), telling it which repo(s) and what changed. It commits Bridge on `main` and the launcher on `dev` (never its `main`), leaves `.claude/` and `plans/` out, runs the build or tests first, and stops if another session already staged files (two sessions sharing the launcher's git index once swept each other's files into the wrong commit). Commit the launcher only when the user asks; otherwise leave its changes uncommitted and list the files.
 
 ## Build & run
 
