@@ -58,6 +58,7 @@ import com.tored.bridgelauncher.services.alarm.AlarmHolder
 import com.tored.bridgelauncher.services.alarm.SerializableNextAlarm
 import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.battery.SerializableBattery
+import com.tored.bridgelauncher.services.storage.SerializableStorageStats
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.connectivity.SerializableConnectivity
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
@@ -457,6 +458,15 @@ class JSToBridgeAPI(
     /** JSON `{ level, isCharging, pluggedType }`, level 0 to 100, `pluggedType` `'ac' | 'usb' | 'wireless' | 'other'` or null. Fires `batteryChanged`. */
     @JavascriptInterface
     fun getBattery(): String = Json.encodeToString(SerializableBattery.serializer(), _battery.battery.value)
+
+    // endregion
+
+
+    // region storage
+
+    /** JSON `{ totalBytes, freeBytes }` of the internal storage. Read on demand, no event. */
+    @JavascriptInterface
+    fun getStorageStats(): String = Json.encodeToString(SerializableStorageStats.serializer(), SerializableStorageStats.read())
 
     // endregion
 
