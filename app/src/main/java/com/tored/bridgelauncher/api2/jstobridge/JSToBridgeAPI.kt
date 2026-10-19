@@ -14,6 +14,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
 import android.util.Log
 import android.webkit.JavascriptInterface
@@ -468,6 +470,26 @@ class JSToBridgeAPI(
     /** JSON `{ totalBytes, freeBytes }` of the internal storage. Read on demand, no event. */
     @JavascriptInterface
     fun getStorageStats(): String = Json.encodeToString(SerializableStorageStats.serializer(), SerializableStorageStats.read())
+
+    // endregion
+
+
+    // region haptics
+
+    private val _vibrator by lazy { _app.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator }
+
+    /** Vibrates for [ms] milliseconds (1..500). The WebView has no `navigator.vibrate`, so this is the only way to get haptics. False if the device can't vibrate. */
+    @Suppress("DEPRECATION")
+    @JavascriptInterface
+    fun requestVibrate(ms: Int): Boolean
+    {
+        val v = _vibrator ?: return false
+        if (!v.hasVibrator()) return false
+        val duration = ms.coerceIn(1, 500).toLong()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) v.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
+        else v.vibrate(duration)
+        return true
+    }
 
     // endregion
 
