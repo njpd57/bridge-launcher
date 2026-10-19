@@ -64,6 +64,13 @@
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
 
+    <!-- Android 11+ package visibility: lets TextToSpeech find the installed engines -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".BridgeLauncherApplication"
         android:allowBackup="true"

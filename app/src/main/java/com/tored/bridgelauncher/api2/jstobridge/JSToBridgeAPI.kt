@@ -59,6 +59,7 @@ import com.tored.bridgelauncher.services.alarm.SerializableNextAlarm
 import com.tored.bridgelauncher.services.battery.BatteryHolder
 import com.tored.bridgelauncher.services.battery.SerializableBattery
 import com.tored.bridgelauncher.services.storage.SerializableStorageStats
+import com.tored.bridgelauncher.services.tts.TtsSpeaker
 import com.tored.bridgelauncher.services.connectivity.ConnectivityHolder
 import com.tored.bridgelauncher.services.connectivity.SerializableConnectivity
 import com.tored.bridgelauncher.services.media.MediaSessionsHolder
@@ -467,6 +468,35 @@ class JSToBridgeAPI(
     /** JSON `{ totalBytes, freeBytes }` of the internal storage. Read on demand, no event. */
     @JavascriptInterface
     fun getStorageStats(): String = Json.encodeToString(SerializableStorageStats.serializer(), SerializableStorageStats.read())
+
+    // endregion
+
+
+    // region speech
+
+    // started on first use, so apps that never speak don't bind the engine
+    private val _tts by lazy { TtsSpeaker(_app) }
+
+    /** True once an Android text-to-speech engine is bound and ready. The first call starts the engine, so it may be false until a moment later. */
+    @JavascriptInterface
+    fun getTtsAvailable(): Boolean = _tts.isReady
+
+    /** Speaks [text] in the language of [languageTag] (e.g. `es-ES`), replacing what is being said. False if the engine isn't ready or has no voice for it. */
+    @JavascriptInterface
+    fun requestSpeak(text: String, languageTag: String, pitch: Double, rate: Double): Boolean = _tts.speak(text, languageTag, pitch.toFloat(), rate.toFloat())
+
+    @JavascriptInterface
+    fun requestStopSpeaking() = _tts.stop()
+
+    /** Opens Android's text-to-speech settings, to install or choose an engine and voice data. */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenTtsSettings(showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) {
+            startActivity(Intent("com.android.settings.TTS_SETTINGS"))
+        }
+    }
 
     // endregion
 
