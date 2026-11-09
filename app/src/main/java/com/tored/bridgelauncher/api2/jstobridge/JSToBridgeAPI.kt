@@ -8,6 +8,7 @@ import android.app.Notification
 import android.app.UiModeManager
 import android.app.WallpaperManager
 import android.app.admin.DevicePolicyManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
@@ -536,6 +537,31 @@ class JSToBridgeAPI(
     {
         return tryRunInHomescreenContext(showToastIfFailed) {
             startActivity(Intent(AlarmClock.ACTION_SHOW_ALARMS))
+        }
+    }
+
+    // endregion
+
+
+    // region assistant
+
+    /**
+     * Opens the device's default assistant (Gemini, Google Assistant, ...). `mode` is `'voice'` (default: `ACTION_VOICE_COMMAND`,
+     * falling back to `ACTION_ASSIST` if nothing handles it) or `'assist'` (`ACTION_ASSIST`, like a long press on home).
+     */
+    @JvmOverloads
+    @JavascriptInterface
+    fun requestOpenAssistant(mode: String = "voice", showToastIfFailed: Boolean = true): Boolean
+    {
+        return tryRunInHomescreenContext(showToastIfFailed) {
+            when (mode)
+            {
+                "voice" ->
+                    try { startActivity(Intent(Intent.ACTION_VOICE_COMMAND)) }
+                    catch (ex: ActivityNotFoundException) { startActivity(Intent(Intent.ACTION_ASSIST)) }
+                "assist" -> startActivity(Intent(Intent.ACTION_ASSIST))
+                else -> throw Exception("Modo de asistente no válido: $mode")
+            }
         }
     }
 
