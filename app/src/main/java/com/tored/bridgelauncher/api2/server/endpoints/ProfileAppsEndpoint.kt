@@ -19,6 +19,8 @@ class ProfileAppsEndpoint(private val _profileApps: ProfileAppsHolder) : IBridge
 {
     override suspend fun handle(req: WebResourceRequest): WebResourceResponse
     {
+        _profileApps.awaitLoaded()
+
         return jsonResponse(
             Json.encodeToString(
                 BridgeAPIEndpointProfileAppsResponse.serializer(),

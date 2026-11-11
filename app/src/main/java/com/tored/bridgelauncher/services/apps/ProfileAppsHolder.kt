@@ -21,9 +21,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -32,6 +35,8 @@ private const val TAG = "ProfileApps"
 
 // used when a drawable has no intrinsic size
 private const val FALLBACK_ICON_SIZE_PX = 96
+
+private const val LOAD_WAIT_TIMEOUT_MS = 5000L
 
 @Serializable
 data class SerializableProfileApp(
@@ -92,6 +97,9 @@ class ProfileAppsHolder(
 
     private val _iconPngCache = ConcurrentHashMap<String, ByteArray>()
 
+    // false until the first reload ends: before that `_apps` is empty, and serving it would hide every app
+    private val _loaded = MutableStateFlow(false)
+
     private val _changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val changes = _changes.asSharedFlow()
 
@@ -117,6 +125,12 @@ class ProfileAppsHolder(
     }
 
     fun getApps() = _apps
+
+    /** Waits (up to a few seconds) for the first load, so a request made at startup doesn't get an empty list. */
+    suspend fun awaitLoaded()
+    {
+        if (!_loaded.value) withTimeoutOrNull(LOAD_WAIT_TIMEOUT_MS) { _loaded.first { it } }
+    }
 
     fun find(packageName: String, userSerial: Long) = _apps.firstOrNull { it.packageName == packageName && it.userSerial == userSerial }
 
@@ -186,6 +200,7 @@ class ProfileAppsHolder(
 
         _iconPngCache.clear()
         _apps = apps
+        _loaded.value = true
         _changes.tryEmit(Unit)
 
         Log.d(TAG, "reload: ${apps.size} apps, ${apps.count { !it.isPersonal }} in other profiles")

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.runBlocking
@@ -42,6 +44,12 @@ class InstalledAppsHolder(
 
     private val _packageNameToInstalledAppMap = mutableStateMapOf<String, InstalledApp>()
     val packageNameToInstalledAppMap = _packageNameToInstalledAppMap as Map<String, InstalledApp>
+
+    /** Waits (up to a few seconds) for the initial load, so a request made at startup doesn't get a partial list. */
+    suspend fun awaitInitialLoad()
+    {
+        if (!_initialLoadingFinished.value) withTimeoutOrNull(5000L) { _initialLoadingFinished.first { it } }
+    }
 
     // if extraBufferCapacity is not set to 1, tryEmit simply doesn't work
     private val _appListChangeEventFlow = MutableSharedFlow<InstalledAppListChangeEvent>(extraBufferCapacity = 1)

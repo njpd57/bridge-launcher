@@ -12,6 +12,8 @@ class AppsEndpoint(private val _installedApps: InstalledAppsHolder) : IBridgeSer
 {
     override suspend fun handle(req: WebResourceRequest): WebResourceResponse
     {
+        _installedApps.awaitInitialLoad()
+
         return jsonResponse(
             Json.encodeToString(
                 BridgeAPIEndpointAppsResponse.serializer(),
